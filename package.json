@@ -1,0 +1,12 @@
+{
+  "name": "pokrix-game",
+  "version": "1.0.0",
+  "description": "Pokrix game - a mix of poker and tetris",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
