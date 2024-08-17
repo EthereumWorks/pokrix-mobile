@@ -246,9 +246,12 @@ function checkAndRemoveFullLines() {
                     }
                 }
 
-                // Проверяем, нужно ли увеличить уровень
-                if (linesRemoved % LINES_PER_LEVEL === 0) {
-                    currentLevel++;
+                // Пересчитываем текущий уровень
+                const newLevel = Math.floor(linesRemoved / LINES_PER_LEVEL) + 1;
+
+                // Если уровень изменился, обновляем интервал падения
+                if (newLevel > currentLevel) {
+                    currentLevel = newLevel;
                     fallInterval = Math.max(100, fallInterval * ACCELERATION_FACTOR); // Уменьшаем интервал падения, но не меньше 100 мс
                 }
 
