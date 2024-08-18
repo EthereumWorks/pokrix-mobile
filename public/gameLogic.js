@@ -43,7 +43,7 @@ let playerScore = 0;
 let isGameOver = false;
 
 // Переменные для контроля времени падения
-let fallInterval = 1000; // Обычный интервал падения (1 секунда)
+let fallInterval = 700; // Обычный интервал падения (1 секунда)
 let fastFallInterval = 100; // Ускоренный интервал падения (0.1 секунда)
 let lastFallTime = 0; // Время последнего падения
 let isFastFalling = false; // Флаг для контроля ускоренного падения
@@ -315,22 +315,22 @@ function checkGameOver() {
 // Функция для отображения сообщения "Game Over"
 function drawGameOver() {
     ctx.fillStyle = 'darkgray';
-    ctx.font = '48px Arial';
+    ctx.font = '96px "Honk", system-ui'; // Устанавливаем шрифт Honk и увеличиваем размер
     ctx.textAlign = 'center';
     ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
 }
 
 function drawNextCard() {
     if (nextCard) {
-        // Рисуем текст "Next card:"
+        // Устанавливаем шрифт для текста
+        ctx.font = '48px "Honk", system-ui';
         ctx.fillStyle = 'black';
-        ctx.font = '24px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('Next card:', rectX + partWidth * 2.5, rectY + 30);
 
         // Увеличиваем отступ между текстом и картой
         const nextCardX = rectX + partWidth * 2.5 - cellWidth / 2;
-        const nextCardY = rectY + 70; // Изменили значение, чтобы карта опустилась ниже
+        const nextCardY = rectY + 120; // Опустили значок карты еще ниже
 
         // Рисуем прямоугольник карты
         ctx.fillStyle = nextCard.suit.color; // Цвет в зависимости от масти
@@ -338,7 +338,7 @@ function drawNextCard() {
 
         // Рисуем номинал карты в центре квадрата
         ctx.fillStyle = 'white';
-        ctx.font = '32px Arial'; // Увеличен размер шрифта для номинала карты
+        ctx.font = '32px Arial'; // Размер шрифта для номинала карты
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(nextCard.value, nextCardX + cellWidth / 2, nextCardY + cellHeight / 2);
@@ -352,35 +352,38 @@ function drawNextCard() {
 }
 
 function drawScore() {
-    // Рисуем текущий уровень в верхнем левом углу
+    ctx.font = '48px "Honk", system-ui'; // Увеличили размер шрифта до 48px
     ctx.fillStyle = 'black';
-    ctx.font = '24px Arial';
     ctx.textAlign = 'left';
+
     ctx.fillText(`Level: ${currentLevel}`, rectX + 20, rectY + 30);
-
-    // Рисуем количество удаленных линий под уровнем
-    ctx.fillText(`Lines: ${linesRemoved}`, rectX + 20, rectY + 60);
-
-    // Рисуем счет игрока под количеством удаленных линий
-    ctx.fillText(`Score: ${playerScore}`, rectX + 20, rectY + 90);
+    ctx.fillText(`Lines: ${linesRemoved}`, rectX + 20, rectY + 80); // Сдвинули вниз, чтобы разместить текст
+    ctx.fillText(`Score: ${playerScore}`, rectX + 20, rectY + 130); // Сдвинули вниз, чтобы разместить текст
 }
 
 function drawRemovedLineInfo() {
     if (removedLineInfo) {
-        // Рисуем информацию о комбинации и очках на месте удаленной линии
+        // Используем шрифт Honk для отображения информации о комбинации и очках
+        ctx.font = '32px "Honk", system-ui'; // Уменьшаем размер шрифта
         ctx.fillStyle = 'black';
-        ctx.font = '24px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`${removedLineInfo.name} +${removedLineInfo.points} points`, rectX + partWidth + partWidth / 2, rectY + removedLineInfo.row * cellHeight + cellHeight / 2);
+
+        // Отображаем текст чуть выше, по центру удаленной линии
+        ctx.fillText(
+            `${removedLineInfo.name} +${removedLineInfo.points} points`,
+            rectX + partWidth + partWidth / 2,
+            rectY + removedLineInfo.row * cellHeight + cellHeight / 3 // Сдвигаем текст выше
+        );
     }
 }
+
 
 function drawGame() {
     // Очищаем canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Рисуем левую часть прямоугольника
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = '#E6E6FA';
     ctx.fillRect(rectX, rectY, partWidth, rectHeight);
 
     // Рисуем среднюю, более светлую часть прямоугольника
@@ -388,11 +391,11 @@ function drawGame() {
     ctx.fillRect(rectX + partWidth, rectY, partWidth, rectHeight);
 
     // Рисуем правую часть прямоугольника
-    ctx.fillStyle = 'gray';
+    ctx.fillStyle = '#E6E6FA';
     ctx.fillRect(rectX + 2 * partWidth, rectY, partWidth, rectHeight);
 
     // Рисуем сетку на средней части
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = '#E6E6FA';
     ctx.lineWidth = 1;
 
     // Вертикальные линии
