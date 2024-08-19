@@ -3,7 +3,7 @@ const ctx = canvas.getContext('2d');
 
 // Устанавливаем размеры канваса с учетом уменьшенной области управления
 canvas.width = 360;
-canvas.height = 640 - 107; // Высота канваса без учета панели управления
+canvas.height = 640 - 100; // Высота канваса без учета панели управления
 
 const rectHeight = canvas.height;
 const leftWidth = (canvas.width / 3) * 2; // Две трети ширины для левой части
@@ -70,6 +70,30 @@ const ACCELERATION_FACTOR = 0.8; // Коэффициент ускорения (�
 let currentLevel = 1; // Текущий уровень, начинается с 1
 let linesRemoved = 0; // Количество удаленных линий
 
+// Переход от главного меню к игре
+document.getElementById('playButton').addEventListener('click', () => {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('gameContainer').style.display = 'flex';
+    startGame();
+});
+
+// Функция для начала игры
+function startGame() {
+    usedCards = [];
+    squares = [];
+    playerScore = 0;
+    isGameOver = false;
+    currentLevel = 1;
+    linesRemoved = 0;
+    nextCard = getRandomCard();
+    removedLineInfo = null;
+    isPaused = false;
+    squares.push(createNewSquare());
+    document.getElementById('playAgainButton').style.display = 'none'; // Скрываем кнопку "Play Again"
+    document.getElementById('controls').style.display = 'flex'; // Показываем кнопки управления
+    requestAnimationFrame(updateGame);
+}
+
 // Функция для получения случайной карты, не используемой на игровом поле
 function getRandomCard() {
     const availableCards = deck.filter(card => !usedCards.some(usedCard => usedCard.suit.name === card.suit.name && usedCard.value === card.value));
@@ -97,36 +121,11 @@ function createNewSquare() {
     };
 }
 
-// Начинаем с одной карты
-squares.push(createNewSquare());
-
-// Добавляем обработчик событий для нажатия клавиш
-document.addEventListener('keydown', (event) => {
-    if (isGameOver || isPaused) return; // Останавливаем управление, если игра окончена или на паузе
-
-    const currentSquare = squares[squares.length - 1];
-    if (event.key === 'ArrowLeft' && currentSquare.x > gridX && !checkCollisionSide(currentSquare, 'left')) {
-        currentSquare.x -= cellWidth; // двигаем карту влево
-    } else if (event.key === 'ArrowRight' && currentSquare.x < gridX + 4 * cellWidth && !checkCollisionSide(currentSquare, 'right')) {
-        currentSquare.x += cellWidth; // двигаем карту вправо
-    } else if (event.key === 'ArrowDown') {
-        isFastFalling = true; // Устанавливаем флаг ускоренного падения
-    }
-});
-
-// Добавляем обработчик для отпускания клавиши вниз
-document.addEventListener('keyup', (event) => {
-    if (event.key === 'ArrowDown') {
-        isFastFalling = false; // Сбрасываем флаг ускоренного падения
-    }
-});
-
 // Обработка нажатий на кнопки управления
 document.getElementById('leftButton').addEventListener('click', () => {
     moveLeft();
 });
 
-// Поменяли местами обработчики для кнопок Right и Down
 document.getElementById('downButton').addEventListener('click', () => {
     moveDown();
 });
@@ -350,21 +349,28 @@ function checkGameOver() {
     const currentSquare = squares[squares.length - 1];
     if (currentSquare.y === gridY && checkCollision(currentSquare)) {
         isGameOver = true;
+        document.getElementById('playAgainButton').style.display = 'block'; // Показываем кнопку "Play Again"
+        document.getElementById('controls').style.display = 'none'; // Скрываем кнопки управления
     }
 }
 
 // Функция для отображения сообщения "Game Over"
 function drawGameOver() {
     ctx.fillStyle = 'darkgray';
-    ctx.font = '36px "Honk", system-ui'; // Уменьшаем размер шрифта для надписи "Game Over"
+    ctx.font = '48px "Honk", system-ui'; // Размер шрифта для надписи "Game Over"
     ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+
+    // Центрируем текст относительно игрового поля
+    const centerX = gridX + gridWidth / 2; // Центр по горизонтали относительно игрового поля
+    const centerY = gridY + gridHeight / 2; // Центр по вертикали относительно игрового поля
+
+    ctx.fillText('GAME OVER', centerX, centerY);
 }
 
 function drawNextCard() {
     if (nextCard) {
         // Устанавливаем шрифт для текста
-        ctx.font = '20px "Honk", system-ui'; // Уменьшили размер шрифта для надписи
+        ctx.font = '22px "Honk", system-ui'; // Уменьшили размер шрифта для надписи
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
         ctx.fillText('Next card:', infoX + infoWidth / 2, infoY + 30);
@@ -379,13 +385,13 @@ function drawNextCard() {
 
         // Рисуем номинал карты в центре квадрата
         ctx.fillStyle = 'white';
-        ctx.font = '16px Georgia'; // Уменьшили размер шрифта для номинала карты
+        ctx.font = '20px Verdana'; // Уменьшили размер шрифта для номинала карты
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(nextCard.value, nextCardX + cellWidth / 2, nextCardY + cellHeight / 2);
 
         // Рисуем масть карты в правом верхнем углу квадрата
-        ctx.font = '12px Georgia'; // Уменьшили размер шрифта для масти карты
+        ctx.font = '16px Verdana'; // Уменьшили размер шрифта для масти карты
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(getSuitSymbol(nextCard.suit.name), nextCardX + cellWidth - 4, nextCardY + 4);
@@ -393,21 +399,34 @@ function drawNextCard() {
 }
 
 function drawScore() {
-    ctx.font = '20px "Honk", system-ui'; // Уменьшили размер шрифта до 20px
     ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
 
     const offsetY = 140; // Отступ после карты
 
-    ctx.fillText(`Level: ${currentLevel}`, infoX + infoWidth / 2, infoY + offsetY + 60);
-    ctx.fillText(`Score: ${playerScore}`, infoX + infoWidth / 2, infoY + offsetY + 120);
-    ctx.fillText(`Lines: ${linesRemoved}`, infoX + infoWidth / 2, infoY + offsetY + 180);
+    // Рисуем надпись Level размером 24px и номер уровня ниже размером 32px
+    ctx.font = '22px "Honk", system-ui'; // Размер шрифта для надписи
+    ctx.fillText('Level', infoX + infoWidth / 2, infoY + offsetY + 30);
+    ctx.font = '36px "Honk", system-ui'; // Размер шрифта для цифр
+    ctx.fillText(`${currentLevel}`, infoX + infoWidth / 2, infoY + offsetY + 60);
+
+    // Рисуем надпись Score размером 24px и количество очков ниже размером 32px
+    ctx.font = '22px "Honk", system-ui'; // Размер шрифта для надписи
+    ctx.fillText('Score', infoX + infoWidth / 2, infoY + offsetY + 130);
+    ctx.font = '36px "Honk", system-ui'; // Размер шрифта для цифр
+    ctx.fillText(`${playerScore}`, infoX + infoWidth / 2, infoY + offsetY + 160);
+
+    // Рисуем надпись Lines размером 24px и количество линий ниже размером 32px
+    ctx.font = '22px "Honk", system-ui'; // Размер шрифта для надписи
+    ctx.fillText('Lines', infoX + infoWidth / 2, infoY + offsetY + 230);
+    ctx.font = '36px "Honk", system-ui'; // Размер шрифта для цифр
+    ctx.fillText(`${linesRemoved}`, infoX + infoWidth / 2, infoY + offsetY + 260);
 }
 
 function drawRemovedLineInfo() {
     if (removedLineInfo) {
         // Используем шрифт Honk для отображения информации о комбинации и очках
-        ctx.font = '16px "Honk", system-ui'; // Уменьшили размер шрифта для информации о комбинации
+        ctx.font = '24px "Honk", system-ui'; // Изменили размер шрифта на 20px
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
 
@@ -455,13 +474,13 @@ function drawGame() {
 
         // Рисуем номинал карты в центре квадрата
         ctx.fillStyle = 'white';
-        ctx.font = '16px Georgia'; // Уменьшили размер шрифта для номинала карты
+        ctx.font = '20px Verdana'; // Уменьшили размер шрифта для номинала карты
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(square.card.value, square.x + cellWidth / 2, square.y + cellHeight / 2);
 
         // Рисуем масть карты в правом верхнем углу квадрата
-        ctx.font = '12px Georgia'; // Уменьшили размер шрифта для масти карты
+        ctx.font = '16px Verdana'; // Уменьшили размер шрифта для масти карты
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(getSuitSymbol(square.card.suit.name), square.x + cellWidth - 4, square.y + 4);
@@ -476,7 +495,6 @@ function drawGame() {
     }
 }
 
-// Функция для получения символа масти карты
 function getSuitSymbol(suit) {
     switch (suit) {
         case 'hearts':
@@ -517,5 +535,7 @@ function updateGame(time) {
     }
 }
 
-// Запускаем игру
-requestAnimationFrame(updateGame);
+// Обработчик для кнопки "Play Again"
+document.getElementById('playAgainButton').addEventListener('click', () => {
+    startGame();
+});

@@ -1,42 +1,3 @@
-.honk-text {
-  font-family: "Honk", system-ui;
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
-  font-variation-settings:
-    "MORF" 15,
-    "SHLN" 50;
-  font-size: 48px; /* Увеличили размер текста в 2 раза, если изначально был 24px */
-}
-
-.card-text {
-  font-family: 'Georgia', serif;
-  font-size: 32px; /* Размер шрифта для символов карт */
-  color: black; /* Цвет текста */
-  text-align: center;
-}
-
-/* Медиазапросы для мобильных устройств */
-@media only screen and (max-width: 480px) {
-  .honk-text {
-      font-size: 32px; /* Уменьшить размер текста для небольших экранов */
-  }
-
-  .card-text {
-      font-size: 24px; /* Уменьшить размер текста для символов карт на небольших экранах */
-  }
-}
-
-@media only screen and (max-width: 768px) and (min-width: 481px) {
-  .honk-text {
-      font-size: 40px; /* Средний размер текста для планшетов */
-  }
-
-  .card-text {
-      font-size: 28px; /* Средний размер текста для символов карт на планшетах */
-  }
-}
-
 body, html {
   margin: 0;
   padding: 0;
@@ -45,6 +6,44 @@ body, html {
   justify-content: center;
   align-items: center;
   background-color: #f0f0f0;
+}
+
+#mainMenu {
+  text-align: center;
+}
+
+.play-button {
+  font-size: 24px;
+  padding: 10px 20px;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.control-button {
+  font-size: 32px; /* Увеличенный размер шрифта для стрелок */
+  padding: 0; /* Убираем отступы для лучшего позиционирования стрелок */
+  border: 2px solid #000;
+  background-color: #fff; /* Белый фон */
+  color: #000; /* Черный цвет стрелок */
+  cursor: pointer;
+  flex: 1; 
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px; /* Закругленные углы */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Тень для придания кнопке объема */
+  transition: background-color 0.3s, transform 0.2s; /* Анимации для взаимодействия */
+}
+
+.control-button:hover {
+  background-color: #f0f0f0; /* Изменение цвета фона при наведении */
+  transform: scale(1.1); /* Увеличение кнопки при наведении */
+}
+
+.control-button:active {
+  background-color: #ccc; /* Цвет при нажатии */
+  transform: scale(0.9); /* Уменьшение кнопки при нажатии */
 }
 
 #gameContainer {
@@ -58,22 +57,16 @@ body, html {
 }
 
 canvas {
-  width: 100%; /* Ширина канваса - 100% от ширины контейнера */
-  height: calc(100% - 100px); /* Высота канваса за вычетом панели управления (160px / 1.5 = ~107px) */
-  image-rendering: pixelated; /* Для пиксельного отображения */
+  width: 100%;
+  height: calc(100% - 100px); /* Высота канваса за вычетом панели управления */
+  image-rendering: pixelated;
 }
 
 #controls {
   height: 100px; /* Высота области управления */
-  width: 100%; /* Ширина на всю ширину контейнера */
-  background-color: #ddd; /* Цвет фона */
+  width: 100%;
+  background-color: #ddd;
   display: flex;
   justify-content: space-around;
   align-items: center;
-}
-
-#controls button {
-  width: 120px;
-  height: 100px; /* Высота кнопок также уменьшена пропорционально */
-  font-size: 24px;
 }
