@@ -1,22 +1,29 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Устанавливаем размеры canvas
-canvas.width = 1200;
-canvas.height = 800;
+// Устанавливаем размеры канваса с учетом уменьшенной области управления
+canvas.width = 360;
+canvas.height = 640 - 107; // Высота канваса без учета панели управления
 
-// Задаем размеры и координаты исходного прямоугольника
-const rectWidth = 960;
-const rectHeight = 600;
-const rectX = (canvas.width - rectWidth) / 2;
-const rectY = (canvas.height - rectHeight) / 2;
+const rectHeight = canvas.height;
+const leftWidth = (canvas.width / 3) * 2; // Две трети ширины для левой части
+const rightWidth = canvas.width / 3; // Одна треть ширины для правой части
 
-// Вычисляем ширину каждой из трех частей
-const partWidth = rectWidth / 3;
+// Размеры для левой части (игровое поле)
+const gridWidth = leftWidth;
+const gridHeight = rectHeight;
+const gridX = 0; // Начало отрисовки по оси X
+const gridY = 0; // Отрисовка начинается с верха
+
+// Размеры для правой части (информация)
+const infoX = leftWidth;
+const infoY = 0;
+const infoWidth = rightWidth;
+const infoHeight = rectHeight;
 
 // Вычисляем размеры клеток для сетки
-const cellWidth = partWidth / 5;
-const cellHeight = rectHeight / 10;
+const cellWidth = gridWidth / 5;  // 5 колонок на всю ширину левой части
+const cellHeight = gridHeight / 8;  // 8 рядов на всю высоту левой части
 
 // Определяем масти и номиналы карт
 const suits = [
@@ -43,7 +50,7 @@ let playerScore = 0;
 let isGameOver = false;
 
 // Переменные для контроля времени падения
-let fallInterval = 700; // Обычный интервал падения (1 секунда)
+let fallInterval = 700; // Обычный интервал падения (0.7 секунды)
 let fastFallInterval = 100; // Ускоренный интервал падения (0.1 секунда)
 let lastFallTime = 0; // Время последнего падения
 let isFastFalling = false; // Флаг для контроля ускоренного падения
@@ -57,12 +64,11 @@ let isPaused = false;
 // Переменные для отображения информации о комбинации
 let removedLineInfo = null;
 
-const LINES_PER_LEVEL = 5; // Количество удаленных линий для увеличения уровня
+const LINES_PER_LEVEL = 10; // Количество удаленных линий для увеличения уровня
 const ACCELERATION_FACTOR = 0.8; // Коэффициент ускорения (уменьшение интервала на 20%)
 
 let currentLevel = 1; // Текущий уровень, начинается с 1
 let linesRemoved = 0; // Количество удаленных линий
-
 
 // Функция для получения случайной карты, не используемой на игровом поле
 function getRandomCard() {
@@ -85,8 +91,8 @@ function createNewSquare() {
     }
     nextCard = getRandomCard(); // Подготовим следующую карту
     return {
-        x: rectX + partWidth + 2 * cellWidth, // центральная колонка
-        y: rectY, // самая верхняя строка
+        x: gridX + 2 * cellWidth, // центрируем по оси X
+        y: gridY, // самая верхняя строка
         card // информация о карте (масть и номинал)
     };
 }
@@ -99,9 +105,9 @@ document.addEventListener('keydown', (event) => {
     if (isGameOver || isPaused) return; // Останавливаем управление, если игра окончена или на паузе
 
     const currentSquare = squares[squares.length - 1];
-    if (event.key === 'ArrowLeft' && currentSquare.x > rectX + partWidth && !checkCollisionSide(currentSquare, 'left')) {
+    if (event.key === 'ArrowLeft' && currentSquare.x > gridX && !checkCollisionSide(currentSquare, 'left')) {
         currentSquare.x -= cellWidth; // двигаем карту влево
-    } else if (event.key === 'ArrowRight' && currentSquare.x < rectX + partWidth + 4 * cellWidth && !checkCollisionSide(currentSquare, 'right')) {
+    } else if (event.key === 'ArrowRight' && currentSquare.x < gridX + 4 * cellWidth && !checkCollisionSide(currentSquare, 'right')) {
         currentSquare.x += cellWidth; // двигаем карту вправо
     } else if (event.key === 'ArrowDown') {
         isFastFalling = true; // Устанавливаем флаг ускоренного падения
@@ -114,6 +120,41 @@ document.addEventListener('keyup', (event) => {
         isFastFalling = false; // Сбрасываем флаг ускоренного падения
     }
 });
+
+// Обработка нажатий на кнопки управления
+document.getElementById('leftButton').addEventListener('click', () => {
+    moveLeft();
+});
+
+// Поменяли местами обработчики для кнопок Right и Down
+document.getElementById('downButton').addEventListener('click', () => {
+    moveDown();
+});
+
+document.getElementById('rightButton').addEventListener('click', () => {
+    moveRight();
+});
+
+function moveLeft() {
+    const currentSquare = squares[squares.length - 1];
+    if (!isGameOver && !isPaused && currentSquare.x > gridX && !checkCollisionSide(currentSquare, 'left')) {
+        currentSquare.x -= cellWidth;
+    }
+}
+
+function moveRight() {
+    const currentSquare = squares[squares.length - 1];
+    if (!isGameOver && !isPaused && currentSquare.x < gridX + 4 * cellWidth && !checkCollisionSide(currentSquare, 'right')) {
+        currentSquare.x += cellWidth;
+    }
+}
+
+function moveDown() {
+    isFastFalling = true;
+    setTimeout(() => {
+        isFastFalling = false;
+    }, 100);
+}
 
 // Функция для проверки коллизии с другими картами по вертикали
 function checkCollision(square) {
@@ -185,11 +226,11 @@ function calculateScoreForLine(line) {
 
 // Функция для проверки заполненности линий и их удаления
 function checkAndRemoveFullLines() {
-    const lines = Array(10).fill(0); // 10 линий по вертикали
+    const lines = Array(8).fill(0); // 8 линий по вертикали
 
     // Считаем количество карт в каждой строке
     squares.forEach(square => {
-        const row = (square.y - rectY) / cellHeight;
+        const row = (square.y - gridY) / cellHeight;
         lines[row]++;
     });
 
@@ -201,7 +242,7 @@ function checkAndRemoveFullLines() {
     // Ищем полные линии и проверяем покерные комбинации
     lines.forEach((count, row) => {
         if (count === 5) { // Если линия заполнена
-            const line = squares.filter(square => (square.y - rectY) / cellHeight === row);
+            const line = squares.filter(square => (square.y - gridY) / cellHeight === row);
             const scoreInfo = calculateScoreForLine(line);
 
             if (scoreInfo.points > 0) {
@@ -211,7 +252,7 @@ function checkAndRemoveFullLines() {
                 linesRemoved++;
 
                 // Удаляем карты из этой линии
-                squares = squares.filter(square => (square.y - rectY) / cellHeight !== row);
+                squares = squares.filter(square => (square.y - gridY) / cellHeight !== row);
 
                 // Возвращаем удаленные карты обратно в колоду
                 line.forEach(card => {
@@ -227,9 +268,9 @@ function checkAndRemoveFullLines() {
 
                 // Если комбинация "Flush" или выше и линия не в самом низу, сжигаем линию ниже
                 if (scoreInfo.name === 'Flush' || scoreInfo.name === 'Full House' || scoreInfo.name === 'Four of a Kind' || scoreInfo.name === 'Straight Flush' || scoreInfo.name === 'Royal Flush') {
-                    if (row < 9 && lines[row + 1] > 0) { // Проверяем, что линия не в самом низу и ниже есть карты
-                        const lineBelow = squares.filter(square => (square.y - rectY) / cellHeight === row + 1);
-                        squares = squares.filter(square => (square.y - rectY) / cellHeight !== row + 1);
+                    if (row < 7 && lines[row + 1] > 0) { // Проверяем, что линия не в самом низу и ниже есть карты
+                        const lineBelow = squares.filter(square => (square.y - gridY) / cellHeight === row + 1);
+                        squares = squares.filter(square => (square.y - gridY) / cellHeight !== row + 1);
 
                         // Возвращаем удаленные карты обратно в колоду
                         lineBelow.forEach(card => {
@@ -273,7 +314,7 @@ function checkAndRemoveFullLines() {
             // Опускаем блоки после удаления первой линии
             if (firstLineRemoved) {
                 squares.forEach(square => {
-                    if ((square.y - rectY) / cellHeight < firstRemovedRow) {
+                    if ((square.y - gridY) / cellHeight < firstRemovedRow) {
                         square.y += cellHeight;
                     }
                 });
@@ -282,7 +323,7 @@ function checkAndRemoveFullLines() {
             // Опускаем блоки после удаления второй линии
             if (secondLineRemoved) {
                 squares.forEach(square => {
-                    if ((square.y - rectY) / cellHeight < firstRemovedRow + 1) {
+                    if ((square.y - gridY) / cellHeight < firstRemovedRow + 1) {
                         square.y += cellHeight;
                     }
                 });
@@ -307,7 +348,7 @@ function checkAndRemoveFullLines() {
 // Функция для проверки условия окончания игры
 function checkGameOver() {
     const currentSquare = squares[squares.length - 1];
-    if (currentSquare.y === rectY && checkCollision(currentSquare)) {
+    if (currentSquare.y === gridY && checkCollision(currentSquare)) {
         isGameOver = true;
     }
 }
@@ -315,7 +356,7 @@ function checkGameOver() {
 // Функция для отображения сообщения "Game Over"
 function drawGameOver() {
     ctx.fillStyle = 'darkgray';
-    ctx.font = '96px "Honk", system-ui'; // Устанавливаем шрифт Honk и увеличиваем размер
+    ctx.font = '36px "Honk", system-ui'; // Уменьшаем размер шрифта для надписи "Game Over"
     ctx.textAlign = 'center';
     ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
 }
@@ -323,14 +364,14 @@ function drawGameOver() {
 function drawNextCard() {
     if (nextCard) {
         // Устанавливаем шрифт для текста
-        ctx.font = '48px "Honk", system-ui';
+        ctx.font = '20px "Honk", system-ui'; // Уменьшили размер шрифта для надписи
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
-        ctx.fillText('Next card:', rectX + partWidth * 2.5, rectY + 30);
+        ctx.fillText('Next card:', infoX + infoWidth / 2, infoY + 30);
 
         // Увеличиваем отступ между текстом и картой
-        const nextCardX = rectX + partWidth * 2.5 - cellWidth / 2;
-        const nextCardY = rectY + 120; // Опустили значок карты еще ниже
+        const nextCardX = infoX + infoWidth / 2 - cellWidth / 2;
+        const nextCardY = infoY + 70; // Разместили значок карты ниже
 
         // Рисуем прямоугольник карты
         ctx.fillStyle = nextCard.suit.color; // Цвет в зависимости от масти
@@ -338,13 +379,13 @@ function drawNextCard() {
 
         // Рисуем номинал карты в центре квадрата
         ctx.fillStyle = 'white';
-        ctx.font = '32px Arial'; // Размер шрифта для номинала карты
+        ctx.font = '16px Georgia'; // Уменьшили размер шрифта для номинала карты
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(nextCard.value, nextCardX + cellWidth / 2, nextCardY + cellHeight / 2);
 
         // Рисуем масть карты в правом верхнем углу квадрата
-        ctx.font = '16px Arial';
+        ctx.font = '12px Georgia'; // Уменьшили размер шрифта для масти карты
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(getSuitSymbol(nextCard.suit.name), nextCardX + cellWidth - 4, nextCardY + 4);
@@ -352,65 +393,58 @@ function drawNextCard() {
 }
 
 function drawScore() {
-    ctx.font = '48px "Honk", system-ui'; // Увеличили размер шрифта до 48px
+    ctx.font = '20px "Honk", system-ui'; // Уменьшили размер шрифта до 20px
     ctx.fillStyle = 'black';
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'center';
 
-    ctx.fillText(`Level: ${currentLevel}`, rectX + 20, rectY + 30);
-    ctx.fillText(`Lines: ${linesRemoved}`, rectX + 20, rectY + 80); // Сдвинули вниз, чтобы разместить текст
-    ctx.fillText(`Score: ${playerScore}`, rectX + 20, rectY + 130); // Сдвинули вниз, чтобы разместить текст
+    const offsetY = 140; // Отступ после карты
+
+    ctx.fillText(`Level: ${currentLevel}`, infoX + infoWidth / 2, infoY + offsetY + 60);
+    ctx.fillText(`Score: ${playerScore}`, infoX + infoWidth / 2, infoY + offsetY + 120);
+    ctx.fillText(`Lines: ${linesRemoved}`, infoX + infoWidth / 2, infoY + offsetY + 180);
 }
 
 function drawRemovedLineInfo() {
     if (removedLineInfo) {
         // Используем шрифт Honk для отображения информации о комбинации и очках
-        ctx.font = '32px "Honk", system-ui'; // Уменьшаем размер шрифта
+        ctx.font = '16px "Honk", system-ui'; // Уменьшили размер шрифта для информации о комбинации
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
 
         // Отображаем текст чуть выше, по центру удаленной линии
         ctx.fillText(
             `${removedLineInfo.name} +${removedLineInfo.points} points`,
-            rectX + partWidth + partWidth / 2,
-            rectY + removedLineInfo.row * cellHeight + cellHeight / 3 // Сдвигаем текст выше
+            gridX + gridWidth / 2,
+            gridY + removedLineInfo.row * cellHeight + cellHeight / 3 // Сдвигаем текст выше
         );
     }
 }
-
 
 function drawGame() {
     // Очищаем canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Рисуем левую часть прямоугольника
-    ctx.fillStyle = '#E6E6FA';
-    ctx.fillRect(rectX, rectY, partWidth, rectHeight);
-
-    // Рисуем среднюю, более светлую часть прямоугольника
+    // Рисуем игровое поле в левой части
     ctx.fillStyle = 'lightgray';
-    ctx.fillRect(rectX + partWidth, rectY, partWidth, rectHeight);
+    ctx.fillRect(gridX, gridY, gridWidth, gridHeight);
 
-    // Рисуем правую часть прямоугольника
-    ctx.fillStyle = '#E6E6FA';
-    ctx.fillRect(rectX + 2 * partWidth, rectY, partWidth, rectHeight);
-
-    // Рисуем сетку на средней части
+    // Рисуем сетку на игровой части
     ctx.strokeStyle = '#E6E6FA';
     ctx.lineWidth = 1;
 
     // Вертикальные линии
     for (let i = 1; i < 5; i++) {
         ctx.beginPath();
-        ctx.moveTo(rectX + partWidth + i * cellWidth, rectY);
-        ctx.lineTo(rectX + partWidth + i * cellWidth, rectY + rectHeight);
+        ctx.moveTo(gridX + i * cellWidth, gridY);
+        ctx.lineTo(gridX + i * cellWidth, gridY + gridHeight);
         ctx.stroke();
     }
 
     // Горизонтальные линии
-    for (let i = 1; i < 10; i++) {
+    for (let i = 1; i < 8; i++) {
         ctx.beginPath();
-        ctx.moveTo(rectX + partWidth, rectY + i * cellHeight);
-        ctx.lineTo(rectX + 2 * partWidth, rectY + i * cellHeight);
+        ctx.moveTo(gridX, gridY + i * cellHeight);
+        ctx.lineTo(gridX + gridWidth, gridY + i * cellHeight);
         ctx.stroke();
     }
 
@@ -421,13 +455,13 @@ function drawGame() {
 
         // Рисуем номинал карты в центре квадрата
         ctx.fillStyle = 'white';
-        ctx.font = '32px Arial'; // Увеличен размер шрифта для номинала карты
+        ctx.font = '16px Georgia'; // Уменьшили размер шрифта для номинала карты
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(square.card.value, square.x + cellWidth / 2, square.y + cellHeight / 2);
 
         // Рисуем масть карты в правом верхнем углу квадрата
-        ctx.font = '16px Arial';
+        ctx.font = '12px Georgia'; // Уменьшили размер шрифта для масти карты
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(getSuitSymbol(square.card.suit.name), square.x + cellWidth - 4, square.y + 4);
@@ -465,7 +499,7 @@ function updateGame(time) {
     const interval = isFastFalling ? fastFallInterval : fallInterval; // Определяем текущий интервал
 
     if (time - lastFallTime > interval) { // Если прошло достаточно времени
-        if (currentSquare.y + cellHeight < rectY + rectHeight && !checkCollision(currentSquare)) {
+        if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
             currentSquare.y += cellHeight; // передвигаем карту вниз на одну клетку
         } else {
             // Если карта достигла дна или упала на другую карту

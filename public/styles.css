@@ -1,18 +1,79 @@
 .honk-text {
-    font-family: "Honk", system-ui;
-    font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
-    font-variation-settings:
-      "MORF" 15,
-      "SHLN" 50;
-    font-size: 48px; /* Увеличили размер текста в 2 раза, если изначально был 24px */
+  font-family: "Honk", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings:
+    "MORF" 15,
+    "SHLN" 50;
+  font-size: 48px; /* Увеличили размер текста в 2 раза, если изначально был 24px */
+}
+
+.card-text {
+  font-family: 'Georgia', serif;
+  font-size: 32px; /* Размер шрифта для символов карт */
+  color: black; /* Цвет текста */
+  text-align: center;
+}
+
+/* Медиазапросы для мобильных устройств */
+@media only screen and (max-width: 480px) {
+  .honk-text {
+      font-size: 32px; /* Уменьшить размер текста для небольших экранов */
   }
 
   .card-text {
-    font-family: 'Georgia', serif;
-    font-size: 32px; /* Размер шрифта для символов карт */
-    color: black; /* Вы можете изменить цвет по необходимости */
-    text-align: center;
+      font-size: 24px; /* Уменьшить размер текста для символов карт на небольших экранах */
+  }
 }
-  
+
+@media only screen and (max-width: 768px) and (min-width: 481px) {
+  .honk-text {
+      font-size: 40px; /* Средний размер текста для планшетов */
+  }
+
+  .card-text {
+      font-size: 28px; /* Средний размер текста для символов карт на планшетах */
+  }
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+}
+
+#gameContainer {
+  width: 360px;
+  height: 640px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Панель управления будет располагаться внизу */
+  align-items: center;
+  background-color: #f0f0f0;
+}
+
+canvas {
+  width: 100%; /* Ширина канваса - 100% от ширины контейнера */
+  height: calc(100% - 100px); /* Высота канваса за вычетом панели управления (160px / 1.5 = ~107px) */
+  image-rendering: pixelated; /* Для пиксельного отображения */
+}
+
+#controls {
+  height: 100px; /* Высота области управления */
+  width: 100%; /* Ширина на всю ширину контейнера */
+  background-color: #ddd; /* Цвет фона */
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+#controls button {
+  width: 120px;
+  height: 100px; /* Высота кнопок также уменьшена пропорционально */
+  font-size: 24px;
+}
