@@ -52,8 +52,8 @@ let isGameOver = false;
 // Переменные для контроля времени падения
 let fallInterval = 700; // Обычный интервал падения (0.7 секунды)
 let fastFallInterval = 100; // Ускоренный интервал падения (0.1 секунда)
+let currentInterval = fallInterval; // Текущий интервал падения
 let lastFallTime = 0; // Время последнего падения
-let isFastFalling = false; // Флаг для контроля ускоренного падения
 
 // Переменная для хранения следующей карты
 let nextCard = getRandomCard();
@@ -88,6 +88,7 @@ function startGame() {
     nextCard = getRandomCard();
     removedLineInfo = null;
     isPaused = false;
+    currentInterval = fallInterval; // Сбрасываем интервал падения на обычный
     squares.push(createNewSquare());
     document.getElementById('playAgainButton').style.display = 'none'; // Скрываем кнопку "Play Again"
     document.getElementById('controls').style.display = 'flex'; // Показываем кнопки управления
@@ -122,16 +123,16 @@ function createNewSquare() {
 }
 
 // Обработка нажатий на кнопки управления
-document.getElementById('leftButton').addEventListener('click', () => {
-    moveLeft();
+document.getElementById('leftButton').addEventListener('touchstart', moveLeft);
+document.getElementById('rightButton').addEventListener('touchstart', moveRight);
+
+// Обработка зажатия кнопки "вниз"
+document.getElementById('downButton').addEventListener('touchstart', () => {
+    currentInterval = fastFallInterval; // Устанавливаем ускоренный интервал при зажатии
 });
 
-document.getElementById('downButton').addEventListener('click', () => {
-    moveDown();
-});
-
-document.getElementById('rightButton').addEventListener('click', () => {
-    moveRight();
+document.getElementById('downButton').addEventListener('touchend', () => {
+    currentInterval = fallInterval; // Возвращаем обычный интервал после отпускания
 });
 
 function moveLeft() {
@@ -146,13 +147,6 @@ function moveRight() {
     if (!isGameOver && !isPaused && currentSquare.x < gridX + 4 * cellWidth && !checkCollisionSide(currentSquare, 'right')) {
         currentSquare.x += cellWidth;
     }
-}
-
-function moveDown() {
-    isFastFalling = true;
-    setTimeout(() => {
-        isFastFalling = false;
-    }, 100);
 }
 
 // Функция для проверки коллизии с другими картами по вертикали
@@ -514,9 +508,8 @@ function updateGame(time) {
     if (isGameOver || isPaused) return; // Останавливаем обновление игры, если она окончена или на паузе
 
     const currentSquare = squares[squares.length - 1];
-    const interval = isFastFalling ? fastFallInterval : fallInterval; // Определяем текущий интервал
 
-    if (time - lastFallTime > interval) { // Если прошло достаточно времени
+    if (time - lastFallTime > currentInterval) { // Если прошло достаточно времени
         if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
             currentSquare.y += cellHeight; // передвигаем карту вниз на одну клетку
         } else {

@@ -70,3 +70,11 @@ canvas {
   justify-content: space-around;
   align-items: center;
 }
+
+/* Добавляем стили для отключения эффекта лупы */
+button {
+    -webkit-touch-callout: none; /* Отключает контекстное меню при длительном нажатии */
+    -webkit-user-select: none;   /* Отключает выделение текста */
+    -webkit-tap-highlight-color: rgba(0,0,0,0); /* Убирает выделение кнопки */
+    touch-action: manipulation;  /* Отключает появление стандартных жестов, таких как лупа */
+}
