@@ -1,6 +1,10 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Получаем имя пользователя из URL-параметров
+const urlParams = new URLSearchParams(window.location.search);
+const playerName = urlParams.get('username') || 'Player'; // Используем имя из Telegram или "Player" по умолчанию
+
 // Устанавливаем размеры канваса с учетом уменьшенной области управления
 canvas.width = 360;
 canvas.height = 640 - 100; // Высота канваса без учета панели управления
@@ -287,6 +291,7 @@ function checkAndRemoveFullLines() {
                 if (newLevel > currentLevel) {
                     currentLevel = newLevel;
                     fallInterval = Math.max(100, fallInterval * ACCELERATION_FACTOR); // Уменьшаем интервал падения, но не меньше 100 мс
+                    currentInterval = fallInterval; // Обновляем текущий интервал падения
                 }
 
                 // Ставим флаг, что линия была удалена
@@ -345,20 +350,72 @@ function checkGameOver() {
         isGameOver = true;
         document.getElementById('playAgainButton').style.display = 'block'; // Показываем кнопку "Play Again"
         document.getElementById('controls').style.display = 'none'; // Скрываем кнопки управления
+
+        // Сохранение результатов после окончания игры
+        saveGameResult(playerName, playerScore, currentLevel, linesRemoved);
     }
 }
 
 // Функция для отображения сообщения "Game Over"
-function drawGameOver() {
+async function drawGameOver() {  // Сделали функцию асинхронной
     ctx.fillStyle = 'darkgray';
     ctx.font = '48px "Honk", system-ui'; // Размер шрифта для надписи "Game Over"
     ctx.textAlign = 'center';
 
     // Центрируем текст относительно игрового поля
     const centerX = gridX + gridWidth / 2; // Центр по горизонтали относительно игрового поля
-    const centerY = gridY + gridHeight / 2; // Центр по вертикали относительно игрового поля
+    const centerY = gridY + gridHeight / 2 - 80; // Центр по вертикали выше на 80 пикселей
 
     ctx.fillText('GAME OVER', centerX, centerY);
+
+    // Настройки тени
+    ctx.shadowColor = 'black'; // Цвет тени
+    ctx.shadowOffsetX = 3; // Смещение тени по оси X
+    ctx.shadowOffsetY = 3; // Смещение тени по оси Y
+    ctx.shadowBlur = 4; // Размытие тени
+
+    // Добавляем текст "You scored:" под надписью "Game Over" (сдвинул на 20 пикселей вниз)
+    ctx.font = '32px "Arial Black", sans-serif'; // Шрифт для выделения текста
+    ctx.fillStyle = 'white'; // Белый цвет текста для контраста
+    ctx.fillText('You scored:', centerX, centerY + 60); // Смещение вниз на 60 пикселей
+
+    // Отображаем количество очков на новой строке с тенью (сдвинул на 20 пикселей вниз)
+    ctx.fillText(`${playerScore} points`, centerX, centerY + 100); // Смещение вниз на 100 пикселей
+
+    if (playerScore > 0) {
+        try {
+            const response = await fetch('/api/top1000'); // Асинхронный запрос
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const leaderboard = await response.json(); // Парсинг ответа
+
+            // Сортируем результаты по очкам и времени добавления (чем раньше, тем выше)
+            leaderboard.sort((a, b) => b.score - a.score || new Date(a.date) - new Date(b.date));
+            
+            // Определяем общее количество результатов
+            const totalResults = leaderboard.length;
+            
+            // Находим позицию текущего результата среди всех
+            const resultRank = leaderboard.findIndex(player => player.player_name === playerName && player.score === playerScore) + 1;
+
+            if (resultRank > 0) {
+                // Отображаем позицию результата (сдвинул на 20 пикселей вниз)
+                ctx.fillText('Your rank:', centerX, centerY + 140); // Смещение вниз на 140 пикселей
+                ctx.fillText(`${resultRank} of ${totalResults}`, centerX, centerY + 180); // Смещение вниз на 180 пикселей
+            }
+        } catch (error) {
+            console.error('Failed to fetch leaderboard:', error);
+            ctx.font = '24px "Verdana", system-ui'; // Шрифт для текста ошибки
+            ctx.fillStyle = 'red'; // Красный цвет текста для ошибки
+            ctx.fillText('Failed to get rank', centerX, centerY + 140); // Смещение вниз на 140 пикселей
+        }
+    }
+
+    // Отключаем тень для последующих элементов, если они будут рисоваться
+    ctx.shadowColor = 'transparent'; // Убираем тень
 }
 
 function drawNextCard() {
@@ -525,6 +582,24 @@ function updateGame(time) {
     drawGame();
     if (!isPaused) {
         requestAnimationFrame(updateGame); // Продолжаем игру только если не на паузе
+    }
+}
+
+// Функция для сохранения результатов игры
+async function saveGameResult(playerName, score, level, linesRemoved) {
+    try {
+        const response = await fetch('/api/scores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ player_name: playerName, score, level, lines_removed: linesRemoved }),
+        });
+        if (!response.ok) {
+            throw new Error('Failed to save score');
+        }
+    } catch (error) {
+        console.error('Error:', error);
     }
 }
 
