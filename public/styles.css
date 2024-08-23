@@ -1,80 +1,97 @@
+:root {
+  --font-heading: 'Arial Black', sans-serif; /* Шрифт для заголовков */
+  --font-body: 'Verdana', sans-serif; /* Шрифт для основного текста */
+}
+
+:root {
+  --font-heading-size: 36px;
+  --font-body-size: 42px;
+}
+
 body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f0f0f0;
+margin: 0;
+padding: 0;
+height: 100%;
+display: flex;
+justify-content: center;
+align-items: center;
+background-color: #f0f0f0;
+font-family: var(--font-body); /* Используем основной шрифт для всего интерфейса */
 }
 
 #mainMenu {
-  text-align: center;
+text-align: center;
+}
+
+h1 {
+font-family: var(--font-heading); /* Используем шрифт для заголовков */
 }
 
 .play-button {
-  font-size: 24px;
-  padding: 10px 20px;
-  margin-top: 20px;
-  cursor: pointer;
+font-size: 24px;
+padding: 10px 20px;
+margin-top: 20px;
+cursor: pointer;
+font-family: var(--font-body); /* Основной шрифт */
 }
 
 .control-button {
-  font-size: 32px; /* Увеличенный размер шрифта для стрелок */
-  padding: 0; /* Убираем отступы для лучшего позиционирования стрелок */
-  border: 2px solid #000;
-  background-color: #fff; /* Белый фон */
-  color: #000; /* Черный цвет стрелок */
-  cursor: pointer;
-  flex: 1; 
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 10px; /* Закругленные углы */
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Тень для придания кнопке объема */
-  transition: background-color 0.3s, transform 0.2s; /* Анимации для взаимодействия */
+font-size: 32px;
+padding: 0;
+border: 2px solid #000;
+background-color: #fff;
+color: #000;
+cursor: pointer;
+flex: 1;
+height: 100%;
+display: flex;
+justify-content: center;
+align-items: center;
+border-radius: 10px;
+box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+transition: background-color 0.3s, transform 0.2s;
+font-family: var(--font-body); /* Основной шрифт */
 }
 
 .control-button:hover {
-  background-color: #f0f0f0; /* Изменение цвета фона при наведении */
-  transform: scale(1.1); /* Увеличение кнопки при наведении */
+background-color: #f0f0f0;
+transform: scale(1.1);
 }
 
 .control-button:active {
-  background-color: #ccc; /* Цвет при нажатии */
-  transform: scale(0.9); /* Уменьшение кнопки при нажатии */
+background-color: #ccc;
+transform: scale(0.9);
 }
 
 #gameContainer {
-  width: 360px;
-  height: 640px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end; /* Панель управления будет располагаться внизу */
-  align-items: center;
-  background-color: #f0f0f0;
+width: 360px;
+height: 640px;
+display: flex;
+flex-direction: column;
+justify-content: flex-end;
+align-items: center;
+background-color: #f0f0f0;
 }
 
 canvas {
-  width: 100%;
-  height: calc(100% - 100px); /* Высота канваса за вычетом панели управления */
-  image-rendering: pixelated;
+width: 100%;
+height: calc(100% - 100px);
+image-rendering: pixelated;
 }
 
 #controls {
-  height: 100px; /* Высота области управления */
-  width: 100%;
-  background-color: #ddd;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
+height: 100px;
+width: 100%;
+background-color: #ddd;
+display: flex;
+justify-content: space-around;
+align-items: center;
 }
 
-/* Добавляем стили для отключения эффекта лупы */
+/* Отключаем эффект лупы на кнопках */
 button {
-    -webkit-touch-callout: none; /* Отключает контекстное меню при длительном нажатии */
-    -webkit-user-select: none;   /* Отключает выделение текста */
-    -webkit-tap-highlight-color: rgba(0,0,0,0); /* Убирает выделение кнопки */
-    touch-action: manipulation;  /* Отключает появление стандартных жестов, таких как лупа */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  touch-action: manipulation;
 }

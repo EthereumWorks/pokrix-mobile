@@ -210,11 +210,11 @@ function calculateScoreForLine(line) {
 
     if (isStraight && isFlush && numericValues[0] === 10) return { name: 'Royal Flush', points: 1000 };
     if (isStraight && isFlush) return { name: 'Straight Flush', points: 500 };
-    if (counts[0] === 4) return { name: 'Four of a Kind', points: 250 };
+    if (counts[0] === 4) return { name: '4 of a Kind', points: 250 };
     if (counts[0] === 3 && counts[1] === 2) return { name: 'Full House', points: 150 };
     if (isFlush) return { name: 'Flush', points: 100 };
     if (isStraight) return { name: 'Straight', points: 80 };
-    if (counts[0] === 3) return { name: 'Three of a Kind', points: 60 };
+    if (counts[0] === 3) return { name: '3 of a Kind', points: 60 };
     if (counts[0] === 2 && counts[1] === 2) return { name: 'Two Pairs', points: 40 };
     if (counts[0] === 2) return { name: 'One Pair', points: 20 };
 
@@ -359,90 +359,76 @@ function checkGameOver() {
 // Функция для отображения сообщения "Game Over"
 async function drawGameOver() {  // Сделали функцию асинхронной
     ctx.fillStyle = 'darkgray';
-    ctx.font = '48px "Honk", system-ui'; // Размер шрифта для надписи "Game Over"
+    ctx.font = '36px "Verdana", system-ui'; // Изменили шрифт на Arial Black
     ctx.textAlign = 'center';
 
     // Центрируем текст относительно игрового поля
-    const centerX = gridX + gridWidth / 2; // Центр по горизонтали относительно игрового поля
-    const centerY = gridY + gridHeight / 2 - 80; // Центр по вертикали выше на 80 пикселей
+    const centerX = gridX + gridWidth / 2;
+    const centerY = gridY + gridHeight / 2 - 80;
 
     ctx.fillText('GAME OVER', centerX, centerY);
 
     // Настройки тени
-    ctx.shadowColor = 'black'; // Цвет тени
-    ctx.shadowOffsetX = 3; // Смещение тени по оси X
-    ctx.shadowOffsetY = 3; // Смещение тени по оси Y
-    ctx.shadowBlur = 4; // Размытие тени
+    ctx.shadowColor = 'black';
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 3;
+    ctx.shadowBlur = 4;
 
-    // Добавляем текст "You scored:" под надписью "Game Over" (сдвинул на 20 пикселей вниз)
-    ctx.font = '32px "Arial Black", sans-serif'; // Шрифт для выделения текста
-    ctx.fillStyle = 'white'; // Белый цвет текста для контраста
-    ctx.fillText('You scored:', centerX, centerY + 60); // Смещение вниз на 60 пикселей
+    // Добавляем текст "You scored:" под надписью "Game Over"
+    ctx.font = '32px "Arial Black", sans-serif'; // Изменили шрифт на Arial Black
+    ctx.fillStyle = 'white';
+    ctx.fillText('You scored:', centerX, centerY + 60);
 
-    // Отображаем количество очков на новой строке с тенью (сдвинул на 20 пикселей вниз)
-    ctx.fillText(`${playerScore} points`, centerX, centerY + 100); // Смещение вниз на 100 пикселей
+    // Отображаем количество очков
+    ctx.fillText(`${playerScore} points`, centerX, centerY + 100);
 
     if (playerScore > 0) {
         try {
-            const response = await fetch('/api/top1000'); // Асинхронный запрос
-            
+            const response = await fetch('/api/top1000');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const leaderboard = await response.json(); // Парсинг ответа
-
-            // Сортируем результаты по очкам и времени добавления (чем раньше, тем выше)
+            const leaderboard = await response.json();
             leaderboard.sort((a, b) => b.score - a.score || new Date(a.date) - new Date(b.date));
-            
-            // Определяем общее количество результатов
             const totalResults = leaderboard.length;
-            
-            // Находим позицию текущего результата среди всех
             const resultRank = leaderboard.findIndex(player => player.player_name === playerName && player.score === playerScore) + 1;
 
             if (resultRank > 0) {
-                // Отображаем позицию результата (сдвинул на 20 пикселей вниз)
-                ctx.fillText('Your rank:', centerX, centerY + 140); // Смещение вниз на 140 пикселей
-                ctx.fillText(`${resultRank} of ${totalResults}`, centerX, centerY + 180); // Смещение вниз на 180 пикселей
+                ctx.fillText('Your rank:', centerX, centerY + 140);
+                ctx.fillText(`${resultRank} of ${totalResults}`, centerX, centerY + 180);
             }
         } catch (error) {
             console.error('Failed to fetch leaderboard:', error);
-            ctx.font = '24px "Verdana", system-ui'; // Шрифт для текста ошибки
-            ctx.fillStyle = 'red'; // Красный цвет текста для ошибки
-            ctx.fillText('Failed to get rank', centerX, centerY + 140); // Смещение вниз на 140 пикселей
+            ctx.font = '24px "Arial Black", sans-serif'; // Изменили шрифт на Arial Black
+            ctx.fillStyle = 'red';
+            ctx.fillText('Failed to get rank', centerX, centerY + 140);
         }
     }
 
-    // Отключаем тень для последующих элементов, если они будут рисоваться
-    ctx.shadowColor = 'transparent'; // Убираем тень
+    ctx.shadowColor = 'transparent';
 }
 
 function drawNextCard() {
     if (nextCard) {
-        // Устанавливаем шрифт для текста
-        ctx.font = '22px "Honk", system-ui'; // Уменьшили размер шрифта для надписи
+        ctx.font = '22px "Arial Black", system-ui'; // Изменили шрифт на Arial Black
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
         ctx.fillText('Next card:', infoX + infoWidth / 2, infoY + 30);
 
-        // Увеличиваем отступ между текстом и картой
         const nextCardX = infoX + infoWidth / 2 - cellWidth / 2;
-        const nextCardY = infoY + 70; // Разместили значок карты ниже
+        const nextCardY = infoY + 70;
 
-        // Рисуем прямоугольник карты
-        ctx.fillStyle = nextCard.suit.color; // Цвет в зависимости от масти
+        ctx.fillStyle = nextCard.suit.color;
         ctx.fillRect(nextCardX, nextCardY, cellWidth, cellHeight);
 
-        // Рисуем номинал карты в центре квадрата
         ctx.fillStyle = 'white';
-        ctx.font = '20px Verdana'; // Уменьшили размер шрифта для номинала карты
+        ctx.font = '20px Verdana'; // Оставили Verdana для номинала карты
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(nextCard.value, nextCardX + cellWidth / 2, nextCardY + cellHeight / 2);
 
-        // Рисуем масть карты в правом верхнем углу квадрата
-        ctx.font = '16px Verdana'; // Уменьшили размер шрифта для масти карты
+        ctx.font = '16px Verdana';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(getSuitSymbol(nextCard.suit.name), nextCardX + cellWidth - 4, nextCardY + 4);
@@ -453,56 +439,47 @@ function drawScore() {
     ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
 
-    const offsetY = 140; // Отступ после карты
+    const offsetY = 140;
 
-    // Рисуем надпись Level размером 24px и номер уровня ниже размером 32px
-    ctx.font = '22px "Honk", system-ui'; // Размер шрифта для надписи
+    ctx.font = '22px "Arial Black", system-ui'; // Изменили шрифт на Arial Black
     ctx.fillText('Level', infoX + infoWidth / 2, infoY + offsetY + 30);
-    ctx.font = '36px "Honk", system-ui'; // Размер шрифта для цифр
+    ctx.font = '36px "Arial Black", system-ui'; // Изменили шрифт на Arial Black
     ctx.fillText(`${currentLevel}`, infoX + infoWidth / 2, infoY + offsetY + 60);
 
-    // Рисуем надпись Score размером 24px и количество очков ниже размером 32px
-    ctx.font = '22px "Honk", system-ui'; // Размер шрифта для надписи
+    ctx.font = '22px "Arial Black", system-ui';
     ctx.fillText('Score', infoX + infoWidth / 2, infoY + offsetY + 130);
-    ctx.font = '36px "Honk", system-ui'; // Размер шрифта для цифр
+    ctx.font = '36px "Arial Black", system-ui';
     ctx.fillText(`${playerScore}`, infoX + infoWidth / 2, infoY + offsetY + 160);
 
-    // Рисуем надпись Lines размером 24px и количество линий ниже размером 32px
-    ctx.font = '22px "Honk", system-ui'; // Размер шрифта для надписи
+    ctx.font = '22px "Arial Black", system-ui';
     ctx.fillText('Lines', infoX + infoWidth / 2, infoY + offsetY + 230);
-    ctx.font = '36px "Honk", system-ui'; // Размер шрифта для цифр
+    ctx.font = '36px "Arial Black", system-ui';
     ctx.fillText(`${linesRemoved}`, infoX + infoWidth / 2, infoY + offsetY + 260);
 }
 
 function drawRemovedLineInfo() {
     if (removedLineInfo) {
-        // Используем шрифт Honk для отображения информации о комбинации и очках
-        ctx.font = '24px "Honk", system-ui'; // Изменили размер шрифта на 20px
+        ctx.font = '24px "Arial Black", system-ui'; // Изменили шрифт на Arial Black
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
 
-        // Отображаем текст чуть выше, по центру удаленной линии
         ctx.fillText(
             `${removedLineInfo.name} +${removedLineInfo.points} points`,
             gridX + gridWidth / 2,
-            gridY + removedLineInfo.row * cellHeight + cellHeight / 3 // Сдвигаем текст выше
+            gridY + removedLineInfo.row * cellHeight + cellHeight / 3
         );
     }
 }
 
 function drawGame() {
-    // Очищаем canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Рисуем игровое поле в левой части
     ctx.fillStyle = 'lightgray';
     ctx.fillRect(gridX, gridY, gridWidth, gridHeight);
 
-    // Рисуем сетку на игровой части
     ctx.strokeStyle = '#E6E6FA';
     ctx.lineWidth = 1;
 
-    // Вертикальные линии
     for (let i = 1; i < 5; i++) {
         ctx.beginPath();
         ctx.moveTo(gridX + i * cellWidth, gridY);
@@ -510,7 +487,6 @@ function drawGame() {
         ctx.stroke();
     }
 
-    // Горизонтальные линии
     for (let i = 1; i < 8; i++) {
         ctx.beginPath();
         ctx.moveTo(gridX, gridY + i * cellHeight);
@@ -518,28 +494,25 @@ function drawGame() {
         ctx.stroke();
     }
 
-    // Рисуем все карты
     squares.forEach(square => {
-        ctx.fillStyle = square.card.suit.color; // Цвет в зависимости от масти
+        ctx.fillStyle = square.card.suit.color;
         ctx.fillRect(square.x, square.y, cellWidth, cellHeight);
 
-        // Рисуем номинал карты в центре квадрата
         ctx.fillStyle = 'white';
-        ctx.font = '20px Verdana'; // Уменьшили размер шрифта для номинала карты
+        ctx.font = '20px Verdana'; // Оставили Verdana для номинала карты
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(square.card.value, square.x + cellWidth / 2, square.y + cellHeight / 2);
 
-        // Рисуем масть карты в правом верхнем углу квадрата
-        ctx.font = '16px Verdana'; // Уменьшили размер шрифта для масти карты
+        ctx.font = '16px Verdana';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(getSuitSymbol(square.card.suit.name), square.x + cellWidth - 4, square.y + 4);
     });
 
-    drawNextCard(); // Рисуем следующую карту
-    drawScore(); // Рисуем счет игрока
-    drawRemovedLineInfo(); // Рисуем информацию о удаленной линии
+    drawNextCard();
+    drawScore();
+    drawRemovedLineInfo();
 
     if (isGameOver) {
         drawGameOver();
@@ -562,30 +535,28 @@ function getSuitSymbol(suit) {
 }
 
 function updateGame(time) {
-    if (isGameOver || isPaused) return; // Останавливаем обновление игры, если она окончена или на паузе
+    if (isGameOver || isPaused) return;
 
     const currentSquare = squares[squares.length - 1];
 
-    if (time - lastFallTime > currentInterval) { // Если прошло достаточно времени
+    if (time - lastFallTime > currentInterval) {
         if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
-            currentSquare.y += cellHeight; // передвигаем карту вниз на одну клетку
+            currentSquare.y += cellHeight;
         } else {
-            // Если карта достигла дна или упала на другую карту
             if (!checkAndRemoveFullLines()) {
-                squares.push(createNewSquare()); // Создаем новую карту, если линия не была удалена
+                squares.push(createNewSquare());
             }
-            checkGameOver(); // Проверяем, окончена ли игра
+            checkGameOver();
         }
         lastFallTime = time;
     }
 
     drawGame();
     if (!isPaused) {
-        requestAnimationFrame(updateGame); // Продолжаем игру только если не на паузе
+        requestAnimationFrame(updateGame);
     }
 }
 
-// Функция для сохранения результатов игры
 async function saveGameResult(playerName, score, level, linesRemoved) {
     try {
         const response = await fetch('/api/scores', {
@@ -603,7 +574,6 @@ async function saveGameResult(playerName, score, level, linesRemoved) {
     }
 }
 
-// Обработчик для кнопки "Play Again"
 document.getElementById('playAgainButton').addEventListener('click', () => {
     startGame();
 });
