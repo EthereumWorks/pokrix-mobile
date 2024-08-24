@@ -1,91 +1,93 @@
 :root {
   --font-heading: 'Arial Black', sans-serif; /* Шрифт для заголовков */
   --font-body: 'Verdana', sans-serif; /* Шрифт для основного текста */
-}
-
-:root {
   --font-heading-size: 36px;
   --font-body-size: 42px;
 }
 
 body, html {
-margin: 0;
-padding: 0;
-height: 100%;
-display: flex;
-justify-content: center;
-align-items: center;
-background-color: #f0f0f0;
-font-family: var(--font-body); /* Используем основной шрифт для всего интерфейса */
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  font-family: var(--font-body);
+  overflow: hidden;
 }
 
 #mainMenu {
-text-align: center;
+  text-align: center;
 }
 
 h1 {
-font-family: var(--font-heading); /* Используем шрифт для заголовков */
+  font-family: var(--font-heading);
 }
 
 .play-button {
-font-size: 24px;
-padding: 10px 20px;
-margin-top: 20px;
-cursor: pointer;
-font-family: var(--font-body); /* Основной шрифт */
+  font-size: 24px;
+  padding: 10px 20px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
 .control-button {
-font-size: 32px;
-padding: 0;
-border: 2px solid #000;
-background-color: #fff;
-color: #000;
-cursor: pointer;
-flex: 1;
-height: 100%;
-display: flex;
-justify-content: center;
-align-items: center;
-border-radius: 10px;
-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-transition: background-color 0.3s, transform 0.2s;
-font-family: var(--font-body); /* Основной шрифт */
+  font-size: 32px;
+  padding: 0;
+  border: 2px solid #000;
+  background-color: #fff;
+  color: #000;
+  cursor: pointer;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s;
+  font-family: var(--font-body);
 }
 
 .control-button:hover {
-background-color: #f0f0f0;
-transform: scale(1.1);
+  background-color: #f0f0f0;
 }
 
 .control-button:active {
-background-color: #ccc;
-transform: scale(0.9);
+  background-color: #ccc;
+  /* Убираем transform чтобы избежать исчезновения кнопок на некоторых устройствах */
+  transform: none;
 }
 
 #gameContainer {
-width: 360px;
-height: 640px;
-display: flex;
-flex-direction: column;
-justify-content: flex-end;
-align-items: center;
-background-color: #f0f0f0;
+  width: 100%;
+  max-width: 360px;
+  height: 100%;
+  max-height: 640px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  background-color: #f0f0f0;
+  overflow: hidden;
 }
 
 canvas {
-width: 100%;
-height: calc(100% - 100px);
-image-rendering: pixelated;
+  width: 100%;
+  height: calc(100% - 100px);
+  image-rendering: pixelated;
 }
 
 #controls {
-height: 100px;
-width: 100%;
-background-color: #ddd;
-display: flex;
-justify-content: space-around;
-align-items: center;
+  height: 100px;
+  width: 100%;
+  background-color: #ddd;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
 
 /* Отключаем эффект лупы на кнопках */
