@@ -86,20 +86,22 @@ document.getElementById('playButton').addEventListener('click', () => {
 
 // Функция для начала игры
 function startGame() {
-    usedCards = [];
-    squares = [];
-    playerScore = 0;
-    isGameOver = false;
-    currentLevel = 1;
-    linesRemoved = 0;
-    nextCard = getRandomCard();
-    removedLineInfo = null;
-    isPaused = false;
-    currentInterval = fallInterval;
-    squares.push(createNewSquare());
-    document.getElementById('playAgainButton').style.display = 'none';
-    document.getElementById('controls').style.display = 'flex';
-    requestAnimationFrame(updateGame);
+    usedCards = []; // Сброс колоды
+    squares = []; // Сброс упавших карт
+    playerScore = 0; // Сброс очков
+    isGameOver = false; // Сброс состояния Game Over
+    currentLevel = 1; // Сброс уровня
+    linesRemoved = 0; // Сброс числа убранных линий
+    nextCard = getRandomCard(); // Получение новой случайной карты
+    removedLineInfo = null; // Сброс информации о комбинации
+    isPaused = false; // Сброс состояния паузы
+    fallInterval = 700; // Сброс скорости падения карт
+    currentInterval = fallInterval; // Применение начальной скорости падения
+    lastFallTime = 0; // Сброс времени последнего падения
+    squares.push(createNewSquare()); // Создание первой карты
+    document.getElementById('playAgainButton').style.display = 'none'; // Скрытие кнопки "Играть снова"
+    document.getElementById('controls').style.display = 'flex'; // Отображение элементов управления
+    requestAnimationFrame(updateGame); // Запуск игрового цикла
 }
 
 // Функция для получения случайной карты, не используемой на игровом поле
@@ -232,7 +234,14 @@ function calculateScoreForLine(line) {
     const numericValues = cardValues.map(value => valueMap[value]).sort((a, b) => a - b);
 
     const isFlush = cardSuits.every(suit => suit === cardSuits[0]);
-    const isStraight = numericValues.every((value, index) => index === 0 || value === numericValues[index - 1] + 1 || (numericValues.includes(2) && numericValues.includes(14)));
+
+    const isStraight = numericValues.every((value, index) => {
+        if (index === 0) return true;
+        return value === numericValues[index - 1] + 1;
+    });
+
+    // Проверка на низкий стрит с тузом (A-2-3-4-5)
+    const isLowStraight = numericValues.join(',') === '2,3,4,5,14';
 
     const valueCounts = numericValues.reduce((acc, value) => {
         acc[value] = (acc[value] || 0) + 1;
@@ -241,12 +250,17 @@ function calculateScoreForLine(line) {
 
     const counts = Object.values(valueCounts).sort((a, b) => b - a);
 
-    if (isStraight && isFlush && numericValues[0] === 10) return { name: 'Royal Flush', points: 1000 };
-    if (isStraight && isFlush) return { name: 'Straight Flush', points: 500 };
+    if ((isStraight || isLowStraight) && isFlush) {
+        if (numericValues[0] === 10 || isLowStraight) {
+            return { name: 'Royal Flush', points: 1000 };
+        } else {
+            return { name: 'Straight Flush', points: 500 };
+        }
+    }
     if (counts[0] === 4) return { name: '4 of a Kind', points: 250 };
     if (counts[0] === 3 && counts[1] === 2) return { name: 'Full House', points: 150 };
     if (isFlush) return { name: 'Flush', points: 100 };
-    if (isStraight) return { name: 'Straight', points: 80 };
+    if (isStraight || isLowStraight) return { name: 'Straight', points: 80 };
     if (counts[0] === 3) return { name: '3 of a Kind', points: 60 };
     if (counts[0] === 2 && counts[1] === 2) return { name: 'Two Pairs', points: 40 };
     if (counts[0] === 2) return { name: 'One Pair', points: 20 };
@@ -310,6 +324,15 @@ function checkAndRemoveFullLines() {
     });
 
     if (lineRemoved) {
+        // Проверяем, не пора ли поднять уровень
+        const newLevel = Math.floor(linesRemoved / LINES_PER_LEVEL) + 1;
+
+        if (newLevel > currentLevel) {
+            currentLevel = newLevel;
+            fallInterval = Math.max(100, fallInterval * ACCELERATION_FACTOR);
+            currentInterval = fallInterval;
+        }
+
         isPaused = true;
         drawGame();
         drawRemovedLineInfo();
@@ -331,24 +354,16 @@ function checkAndRemoveFullLines() {
                 });
             }
 
-            // Проверка на то, что после удаления линии нет никаких карт, упирающихся в верхнюю границу
-            squares.forEach(square => {
-                if (square.y === gridY) {
-                    isGameOver = true;
-                }
-            });
-
-            if (squares.length === 0) {
-                squares.push(createNewSquare());
-            }
-
-            removedLineInfo = null;
-            isPaused = false;
+            // Проверка на конец игры перемещена сюда
+            checkGameOver();
 
             if (!isGameOver) {
+                if (squares.length === 0) {
+                    squares.push(createNewSquare());
+                }
+                removedLineInfo = null;
+                isPaused = false;
                 requestAnimationFrame(updateGame);
-            } else {
-                drawGameOver();
             }
         }, 1000);
     }
@@ -356,11 +371,18 @@ function checkAndRemoveFullLines() {
     return lineRemoved;
 }
 
-
 // Функция для проверки условия окончания игры
 function checkGameOver() {
-    const currentSquare = squares[squares.length - 1];
-    if (currentSquare.y === gridY && checkCollision(currentSquare)) {
+    const middleColumnX = gridX + 2 * cellWidth; // Координата X для среднего столбца (если нумерация столбцов начинается с 0)
+
+    // Проверяем, есть ли карты в верхнем ряду в среднем столбце
+    const isMiddleColumnFull = squares.some(square => 
+        square.x === middleColumnX && 
+        square.y === gridY &&
+        checkCollision(square)
+    );
+
+    if (isMiddleColumnFull) {
         isGameOver = true;
         document.getElementById('playAgainButton').style.display = 'block';
         document.getElementById('controls').style.display = 'none';
@@ -419,7 +441,7 @@ async function drawGameOver() {
 
 function drawNextCard() {
     if (nextCard) {
-        ctx.font = '22px "Arial Black", system-ui';
+        ctx.font = '20px "Arial Black", system-ui';
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
         ctx.fillText('Next card:', infoX + infoWidth / 2, infoY + 30);
@@ -449,17 +471,17 @@ function drawScore() {
 
     const offsetY = 140;
 
-    ctx.font = '22px "Arial Black", system-ui';
+    ctx.font = '20px "Arial Black", system-ui';
     ctx.fillText('Level', infoX + infoWidth / 2, infoY + offsetY + 30);
     ctx.font = '36px "Arial Black", system-ui';
     ctx.fillText(`${currentLevel}`, infoX + infoWidth / 2, infoY + offsetY + 60);
 
-    ctx.font = '22px "Arial Black", system-ui';
+    ctx.font = '20px "Arial Black", system-ui';
     ctx.fillText('Score', infoX + infoWidth / 2, infoY + offsetY + 130);
     ctx.font = '36px "Arial Black", system-ui';
     ctx.fillText(`${playerScore}`, infoX + infoWidth / 2, infoY + offsetY + 160);
 
-    ctx.font = '22px "Arial Black", system-ui';
+    ctx.font = '20px "Arial Black", system-ui';
     ctx.fillText('Lines', infoX + infoWidth / 2, infoY + offsetY + 230);
     ctx.font = '36px "Arial Black", system-ui';
     ctx.fillText(`${linesRemoved}`, infoX + infoWidth / 2, infoY + offsetY + 260);
@@ -467,7 +489,7 @@ function drawScore() {
 
 function drawRemovedLineInfo() {
     if (removedLineInfo) {
-        ctx.font = '24px "Arial Black", system-ui';
+        ctx.font = '18px "Arial Black", system-ui';
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
 
