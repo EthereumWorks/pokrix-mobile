@@ -92,4 +92,4 @@ app.get('/api/top1000', async (req, res) => {
 
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on http://77.238.242.192:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on http://77.238.245.5:${PORT}`));

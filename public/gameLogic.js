@@ -3,21 +3,21 @@ const ctx = canvas.getContext('2d');
 
 // Получаем имя пользователя из URL-параметров
 const urlParams = new URLSearchParams(window.location.search);
-const playerName = urlParams.get('username') || 'Player'; // Используем имя из Telegram или "Player" по умолчанию
+const playerName = urlParams.get('username') || 'Player';
 
 // Устанавливаем размеры канваса с учетом уменьшенной области управления
 canvas.width = 360;
-canvas.height = 640 - 100; // Высота канваса без учета панели управления
+canvas.height = 640 - 100;
 
 const rectHeight = canvas.height;
-const leftWidth = (canvas.width / 3) * 2; // Две трети ширины для левой части
-const rightWidth = canvas.width / 3; // Одна треть ширины для правой части
+const leftWidth = (canvas.width / 3) * 2;
+const rightWidth = canvas.width / 3;
 
 // Размеры для левой части (игровое поле)
 const gridWidth = leftWidth;
 const gridHeight = rectHeight;
-const gridX = 0; // Начало отрисовки по оси X
-const gridY = 0; // Отрисовка начинается с верха
+const gridX = 0;
+const gridY = 0;
 
 // Размеры для правой части (информация)
 const infoX = leftWidth;
@@ -26,8 +26,8 @@ const infoWidth = rightWidth;
 const infoHeight = rectHeight;
 
 // Вычисляем размеры клеток для сетки
-const cellWidth = gridWidth / 5;  // 5 колонок на всю ширину левой части
-const cellHeight = gridHeight / 8;  // 8 рядов на всю высоту левой части
+const cellWidth = gridWidth / 5;
+const cellHeight = gridHeight / 8;
 
 // Определяем масти и номиналы карт
 const suits = [
@@ -54,10 +54,10 @@ let playerScore = 0;
 let isGameOver = false;
 
 // Переменные для контроля времени падения
-let fallInterval = 700; // Обычный интервал падения (0.7 секунды)
-let fastFallInterval = 100; // Ускоренный интервал падения (0.1 секунда)
-let currentInterval = fallInterval; // Текущий интервал падения
-let lastFallTime = 0; // Время последнего падения
+let fallInterval = 700;
+let fastFallInterval = 100;
+let currentInterval = fallInterval;
+let lastFallTime = 0;
 
 // Переменная для хранения следующей карты
 let nextCard = getRandomCard();
@@ -68,42 +68,47 @@ let isPaused = false;
 // Переменные для отображения информации о комбинации
 let removedLineInfo = null;
 
-const LINES_PER_LEVEL = 10; // Количество удаленных линий для увеличения уровня
-const ACCELERATION_FACTOR = 0.8; // Коэффициент ускорения (уменьшение интервала на 20%)
+const LINES_PER_LEVEL = 10;
+const ACCELERATION_FACTOR = 0.8;
 
-let currentLevel = 1; // Текущий уровень, начинается с 1
-let linesRemoved = 0; // Количество удаленных линий
+let currentLevel = 1;
+let linesRemoved = 0;
+
+// Определение устройства
+const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
 // Переход от главного меню к игре
 document.getElementById('playButton').addEventListener('click', () => {
     document.getElementById('mainMenu').style.display = 'none';
-    document.getElementById('gameContainer').style.display = 'flex';
+    document.getElementById('gameWrapper').style.display = 'flex';
     startGame();
 });
 
 // Функция для начала игры
 function startGame() {
-    usedCards = [];
-    squares = [];
-    playerScore = 0;
-    isGameOver = false;
-    currentLevel = 1;
-    linesRemoved = 0;
-    nextCard = getRandomCard();
-    removedLineInfo = null;
-    isPaused = false;
-    currentInterval = fallInterval; // Сбрасываем интервал падения на обычный
-    squares.push(createNewSquare());
-    document.getElementById('playAgainButton').style.display = 'none'; // Скрываем кнопку "Play Again"
-    document.getElementById('controls').style.display = 'flex'; // Показываем кнопки управления
-    requestAnimationFrame(updateGame);
+    usedCards = []; // Сброс колоды
+    squares = []; // Сброс упавших карт
+    playerScore = 0; // Сброс очков
+    isGameOver = false; // Сброс состояния Game Over
+    currentLevel = 1; // Сброс уровня
+    linesRemoved = 0; // Сброс числа убранных линий
+    nextCard = getRandomCard(); // Получение новой случайной карты
+    removedLineInfo = null; // Сброс информации о комбинации
+    isPaused = false; // Сброс состояния паузы
+    fallInterval = 700; // Сброс скорости падения карт
+    currentInterval = fallInterval; // Применение начальной скорости падения
+    lastFallTime = 0; // Сброс времени последнего падения
+    squares.push(createNewSquare()); // Создание первой карты
+    document.getElementById('playAgainButton').style.display = 'none'; // Скрытие кнопки "Играть снова"
+    document.getElementById('controls').style.display = 'flex'; // Отображение элементов управления
+    requestAnimationFrame(updateGame); // Запуск игрового цикла
 }
 
 // Функция для получения случайной карты, не используемой на игровом поле
 function getRandomCard() {
     const availableCards = deck.filter(card => !usedCards.some(usedCard => usedCard.suit.name === card.suit.name && usedCard.value === card.value));
     if (availableCards.length === 0) {
-        return null; // Все карты использованы, игра должна завершиться
+        return null;
     }
     const randomIndex = Math.floor(Math.random() * availableCards.length);
     const card = availableCards[randomIndex];
@@ -115,30 +120,60 @@ function getRandomCard() {
 function createNewSquare() {
     const card = nextCard;
     if (!card) {
-        isGameOver = true; // Если не осталось доступных карт, игра завершена
+        isGameOver = true;
         return null;
     }
-    nextCard = getRandomCard(); // Подготовим следующую карту
+    nextCard = getRandomCard();
     return {
-        x: gridX + 2 * cellWidth, // центрируем по оси X
-        y: gridY, // самая верхняя строка
-        card // информация о карте (масть и номинал)
+        x: gridX + 2 * cellWidth,
+        y: gridY,
+        card
     };
 }
 
-// Обработка нажатий на кнопки управления
-document.getElementById('leftButton').addEventListener('touchstart', moveLeft);
-document.getElementById('rightButton').addEventListener('touchstart', moveRight);
+// Добавление обработчиков событий в зависимости от устройства
+if (isMobile) {
+    document.getElementById('leftButton').addEventListener('touchstart', moveLeft);
+    document.getElementById('rightButton').addEventListener('touchstart', moveRight);
+    document.getElementById('downButton').addEventListener('touchstart', () => {
+        currentInterval = fastFallInterval;
+    });
+    document.getElementById('downButton').addEventListener('touchend', () => {
+        currentInterval = fallInterval;
+    });
+} else {
+    document.getElementById('leftButton').addEventListener('click', moveLeft);
+    document.getElementById('rightButton').addEventListener('click', moveRight);
+    document.getElementById('downButton').addEventListener('mousedown', () => {
+        currentInterval = fastFallInterval;
+    });
+    document.getElementById('downButton').addEventListener('mouseup', () => {
+        currentInterval = fallInterval;
+    });
+}
 
-// Обработка зажатия кнопки "вниз"
-document.getElementById('downButton').addEventListener('touchstart', () => {
-    currentInterval = fastFallInterval; // Устанавливаем ускоренный интервал при зажатии
+// Обработка событий нажатия клавиш
+document.addEventListener('keydown', (event) => {
+    switch (event.key) {
+        case 'ArrowLeft':
+            moveLeft();
+            break;
+        case 'ArrowRight':
+            moveRight();
+            break;
+        case 'ArrowDown':
+            currentInterval = fastFallInterval;
+            break;
+    }
 });
 
-document.getElementById('downButton').addEventListener('touchend', () => {
-    currentInterval = fallInterval; // Возвращаем обычный интервал после отпускания
+document.addEventListener('keyup', (event) => {
+    if (event.key === 'ArrowDown') {
+        currentInterval = fallInterval;
+    }
 });
 
+// Функция для перемещения влево
 function moveLeft() {
     const currentSquare = squares[squares.length - 1];
     if (!isGameOver && !isPaused && currentSquare.x > gridX && !checkCollisionSide(currentSquare, 'left')) {
@@ -146,6 +181,7 @@ function moveLeft() {
     }
 }
 
+// Функция для перемещения вправо
 function moveRight() {
     const currentSquare = squares[squares.length - 1];
     if (!isGameOver && !isPaused && currentSquare.x < gridX + 4 * cellWidth && !checkCollisionSide(currentSquare, 'right')) {
@@ -194,12 +230,18 @@ function calculateScoreForLine(line) {
     const cardValues = line.map(square => square.card.value);
     const cardSuits = line.map(square => square.card.suit.name);
 
-    // Конвертация номиналов в числовые значения для проверки комбинаций
     const valueMap = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
     const numericValues = cardValues.map(value => valueMap[value]).sort((a, b) => a - b);
 
     const isFlush = cardSuits.every(suit => suit === cardSuits[0]);
-    const isStraight = numericValues.every((value, index) => index === 0 || value === numericValues[index - 1] + 1);
+
+    const isStraight = numericValues.every((value, index) => {
+        if (index === 0) return true;
+        return value === numericValues[index - 1] + 1;
+    });
+
+    // Проверка на низкий стрит с тузом (A-2-3-4-5)
+    const isLowStraight = numericValues.join(',') === '2,3,4,5,14';
 
     const valueCounts = numericValues.reduce((acc, value) => {
         acc[value] = (acc[value] || 0) + 1;
@@ -208,24 +250,28 @@ function calculateScoreForLine(line) {
 
     const counts = Object.values(valueCounts).sort((a, b) => b - a);
 
-    if (isStraight && isFlush && numericValues[0] === 10) return { name: 'Royal Flush', points: 1000 };
-    if (isStraight && isFlush) return { name: 'Straight Flush', points: 500 };
+    if ((isStraight || isLowStraight) && isFlush) {
+        if (numericValues[0] === 10 || isLowStraight) {
+            return { name: 'Royal Flush', points: 1000 };
+        } else {
+            return { name: 'Straight Flush', points: 500 };
+        }
+    }
     if (counts[0] === 4) return { name: '4 of a Kind', points: 250 };
     if (counts[0] === 3 && counts[1] === 2) return { name: 'Full House', points: 150 };
     if (isFlush) return { name: 'Flush', points: 100 };
-    if (isStraight) return { name: 'Straight', points: 80 };
+    if (isStraight || isLowStraight) return { name: 'Straight', points: 80 };
     if (counts[0] === 3) return { name: '3 of a Kind', points: 60 };
     if (counts[0] === 2 && counts[1] === 2) return { name: 'Two Pairs', points: 40 };
     if (counts[0] === 2) return { name: 'One Pair', points: 20 };
 
-    return { name: 'No Combination', points: 0 }; // Нет комбинации
+    return { name: 'No Combination', points: 0 };
 }
 
 // Функция для проверки заполненности линий и их удаления
 function checkAndRemoveFullLines() {
-    const lines = Array(8).fill(0); // 8 линий по вертикали
+    const lines = Array(8).fill(0);
 
-    // Считаем количество карт в каждой строке
     squares.forEach(square => {
         const row = (square.y - gridY) / cellHeight;
         lines[row]++;
@@ -236,80 +282,62 @@ function checkAndRemoveFullLines() {
     let secondLineRemoved = false;
     let firstRemovedRow = null;
 
-    // Ищем полные линии и проверяем покерные комбинации
     lines.forEach((count, row) => {
-        if (count === 5) { // Если линия заполнена
+        if (count === 5) {
             const line = squares.filter(square => (square.y - gridY) / cellHeight === row);
             const scoreInfo = calculateScoreForLine(line);
 
             if (scoreInfo.points > 0) {
-                playerScore += scoreInfo.points; // Начисляем очки
-
-                // Увеличиваем счетчик удаленных линий
+                playerScore += scoreInfo.points;
                 linesRemoved++;
 
-                // Удаляем карты из этой линии
                 squares = squares.filter(square => (square.y - gridY) / cellHeight !== row);
 
-                // Возвращаем удаленные карты обратно в колоду
                 line.forEach(card => {
                     usedCards = usedCards.filter(usedCard => usedCard !== card.card);
                 });
 
-                // Запоминаем информацию о первой удаленной линии
                 if (!firstLineRemoved) {
                     removedLineInfo = { row, ...scoreInfo };
                     firstRemovedRow = row;
                     firstLineRemoved = true;
                 }
 
-                // Если комбинация "Flush" или выше и линия не в самом низу, сжигаем линию ниже
-                if (scoreInfo.name === 'Flush' || scoreInfo.name === 'Full House' || scoreInfo.name === 'Four of a Kind' || scoreInfo.name === 'Straight Flush' || scoreInfo.name === 'Royal Flush') {
-                    if (row < 7 && lines[row + 1] > 0) { // Проверяем, что линия не в самом низу и ниже есть карты
+                if (scoreInfo.name === 'Flush' || scoreInfo.name === 'Full House' || scoreInfo.name === '4 of a Kind' || scoreInfo.name === 'Straight Flush' || scoreInfo.name === 'Royal Flush') {
+                    if (row < 7 && lines[row + 1] > 0) {
                         const lineBelow = squares.filter(square => (square.y - gridY) / cellHeight === row + 1);
                         squares = squares.filter(square => (square.y - gridY) / cellHeight !== row + 1);
 
-                        // Возвращаем удаленные карты обратно в колоду
                         lineBelow.forEach(card => {
                             usedCards = usedCards.filter(usedCard => usedCard !== card.card);
                         });
 
                         secondLineRemoved = true;
-
-                        // Увеличиваем счетчик удаленных линий
                         linesRemoved++;
-
-                        // Сбрасываем счетчик строк для линии ниже, чтобы не удалять дополнительные строки
                         lines[row + 1] = 0;
                     }
                 }
 
-                // Пересчитываем текущий уровень
-                const newLevel = Math.floor(linesRemoved / LINES_PER_LEVEL) + 1;
-
-                // Если уровень изменился, обновляем интервал падения
-                if (newLevel > currentLevel) {
-                    currentLevel = newLevel;
-                    fallInterval = Math.max(100, fallInterval * ACCELERATION_FACTOR); // Уменьшаем интервал падения, но не меньше 100 мс
-                    currentInterval = fallInterval; // Обновляем текущий интервал падения
-                }
-
-                // Ставим флаг, что линия была удалена
                 lineRemoved = true;
             }
         }
     });
 
     if (lineRemoved) {
-        // Ставим игру на паузу на 1 секунду
-        isPaused = true;
+        // Проверяем, не пора ли поднять уровень
+        const newLevel = Math.floor(linesRemoved / LINES_PER_LEVEL) + 1;
 
-        // Отображаем сообщение о комбинации и набранных очках
+        if (newLevel > currentLevel) {
+            currentLevel = newLevel;
+            fallInterval = Math.max(100, fallInterval * ACCELERATION_FACTOR);
+            currentInterval = fallInterval;
+        }
+
+        isPaused = true;
         drawGame();
         drawRemovedLineInfo();
 
         setTimeout(() => {
-            // Опускаем блоки после удаления первой линии
             if (firstLineRemoved) {
                 squares.forEach(square => {
                     if ((square.y - gridY) / cellHeight < firstRemovedRow) {
@@ -318,7 +346,6 @@ function checkAndRemoveFullLines() {
                 });
             }
 
-            // Опускаем блоки после удаления второй линии
             if (secondLineRemoved) {
                 squares.forEach(square => {
                     if ((square.y - gridY) / cellHeight < firstRemovedRow + 1) {
@@ -327,16 +354,17 @@ function checkAndRemoveFullLines() {
                 });
             }
 
-            // Если поле пустое, создаем новую карту
-            if (squares.length === 0) {
-                squares.push(createNewSquare());
+            // Проверка на конец игры перемещена сюда
+            checkGameOver();
+
+            if (!isGameOver) {
+                if (squares.length === 0) {
+                    squares.push(createNewSquare());
+                }
+                removedLineInfo = null;
+                isPaused = false;
+                requestAnimationFrame(updateGame);
             }
-
-            removedLineInfo = null; // Убираем информацию о комбинации после паузы
-            isPaused = false; // Снимаем паузу и продолжаем игру
-
-            requestAnimationFrame(updateGame); // Возобновляем игру после паузы
-
         }, 1000);
     }
 
@@ -345,41 +373,43 @@ function checkAndRemoveFullLines() {
 
 // Функция для проверки условия окончания игры
 function checkGameOver() {
-    const currentSquare = squares[squares.length - 1];
-    if (currentSquare.y === gridY && checkCollision(currentSquare)) {
-        isGameOver = true;
-        document.getElementById('playAgainButton').style.display = 'block'; // Показываем кнопку "Play Again"
-        document.getElementById('controls').style.display = 'none'; // Скрываем кнопки управления
+    const middleColumnX = gridX + 2 * cellWidth; // Координата X для среднего столбца (если нумерация столбцов начинается с 0)
 
-        // Сохранение результатов после окончания игры
+    // Проверяем, есть ли карты в верхнем ряду в среднем столбце
+    const isMiddleColumnFull = squares.some(square => 
+        square.x === middleColumnX && 
+        square.y === gridY &&
+        checkCollision(square)
+    );
+
+    if (isMiddleColumnFull) {
+        isGameOver = true;
+        document.getElementById('playAgainButton').style.display = 'block';
+        document.getElementById('controls').style.display = 'none';
+
         saveGameResult(playerName, playerScore, currentLevel, linesRemoved);
     }
 }
 
 // Функция для отображения сообщения "Game Over"
-async function drawGameOver() {  // Сделали функцию асинхронной
+async function drawGameOver() {
     ctx.fillStyle = 'darkgray';
-    ctx.font = '36px "Verdana", system-ui'; // Изменили шрифт на Arial Black
+    ctx.font = '36px "Verdana", system-ui';
     ctx.textAlign = 'center';
 
-    // Центрируем текст относительно игрового поля
     const centerX = gridX + gridWidth / 2;
     const centerY = gridY + gridHeight / 2 - 80;
 
     ctx.fillText('GAME OVER', centerX, centerY);
 
-    // Настройки тени
     ctx.shadowColor = 'black';
     ctx.shadowOffsetX = 3;
     ctx.shadowOffsetY = 3;
     ctx.shadowBlur = 4;
 
-    // Добавляем текст "You scored:" под надписью "Game Over"
-    ctx.font = '32px "Arial Black", sans-serif'; // Изменили шрифт на Arial Black
+    ctx.font = '32px "Arial Black", sans-serif';
     ctx.fillStyle = 'white';
     ctx.fillText('You scored:', centerX, centerY + 60);
-
-    // Отображаем количество очков
     ctx.fillText(`${playerScore} points`, centerX, centerY + 100);
 
     if (playerScore > 0) {
@@ -400,7 +430,7 @@ async function drawGameOver() {  // Сделали функцию асинхро
             }
         } catch (error) {
             console.error('Failed to fetch leaderboard:', error);
-            ctx.font = '24px "Arial Black", sans-serif'; // Изменили шрифт на Arial Black
+            ctx.font = '24px "Arial Black", sans-serif';
             ctx.fillStyle = 'red';
             ctx.fillText('Failed to get rank', centerX, centerY + 140);
         }
@@ -411,7 +441,7 @@ async function drawGameOver() {  // Сделали функцию асинхро
 
 function drawNextCard() {
     if (nextCard) {
-        ctx.font = '22px "Arial Black", system-ui'; // Изменили шрифт на Arial Black
+        ctx.font = '20px "Arial Black", system-ui';
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
         ctx.fillText('Next card:', infoX + infoWidth / 2, infoY + 30);
@@ -423,7 +453,7 @@ function drawNextCard() {
         ctx.fillRect(nextCardX, nextCardY, cellWidth, cellHeight);
 
         ctx.fillStyle = 'white';
-        ctx.font = '20px Verdana'; // Оставили Verdana для номинала карты
+        ctx.font = '20px Verdana';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(nextCard.value, nextCardX + cellWidth / 2, nextCardY + cellHeight / 2);
@@ -441,17 +471,17 @@ function drawScore() {
 
     const offsetY = 140;
 
-    ctx.font = '22px "Arial Black", system-ui'; // Изменили шрифт на Arial Black
+    ctx.font = '20px "Arial Black", system-ui';
     ctx.fillText('Level', infoX + infoWidth / 2, infoY + offsetY + 30);
-    ctx.font = '36px "Arial Black", system-ui'; // Изменили шрифт на Arial Black
+    ctx.font = '36px "Arial Black", system-ui';
     ctx.fillText(`${currentLevel}`, infoX + infoWidth / 2, infoY + offsetY + 60);
 
-    ctx.font = '22px "Arial Black", system-ui';
+    ctx.font = '20px "Arial Black", system-ui';
     ctx.fillText('Score', infoX + infoWidth / 2, infoY + offsetY + 130);
     ctx.font = '36px "Arial Black", system-ui';
     ctx.fillText(`${playerScore}`, infoX + infoWidth / 2, infoY + offsetY + 160);
 
-    ctx.font = '22px "Arial Black", system-ui';
+    ctx.font = '20px "Arial Black", system-ui';
     ctx.fillText('Lines', infoX + infoWidth / 2, infoY + offsetY + 230);
     ctx.font = '36px "Arial Black", system-ui';
     ctx.fillText(`${linesRemoved}`, infoX + infoWidth / 2, infoY + offsetY + 260);
@@ -459,7 +489,7 @@ function drawScore() {
 
 function drawRemovedLineInfo() {
     if (removedLineInfo) {
-        ctx.font = '24px "Arial Black", system-ui'; // Изменили шрифт на Arial Black
+        ctx.font = '18px "Arial Black", system-ui';
         ctx.fillStyle = 'black';
         ctx.textAlign = 'center';
 
@@ -499,7 +529,7 @@ function drawGame() {
         ctx.fillRect(square.x, square.y, cellWidth, cellHeight);
 
         ctx.fillStyle = 'white';
-        ctx.font = '20px Verdana'; // Оставили Verdana для номинала карты
+        ctx.font = '20px Verdana';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(square.card.value, square.x + cellWidth / 2, square.y + cellHeight / 2);
@@ -574,6 +604,9 @@ async function saveGameResult(playerName, score, level, linesRemoved) {
     }
 }
 
-document.getElementById('playAgainButton').addEventListener('click', () => {
-    startGame();
+// Переход от главного меню к игре
+document.getElementById('playButton').addEventListener('click', () => {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('gameWrapper').style.display = 'flex';
+    startGame(); // Запуск игры
 });

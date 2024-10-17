@@ -1,97 +1,100 @@
 :root {
-  --font-heading: 'Arial Black', sans-serif; /* Шрифт для заголовков */
-  --font-body: 'Verdana', sans-serif; /* Шрифт для основного текста */
-}
-
-:root {
+  --font-heading: 'Arial Black', sans-serif;
+  --font-body: 'Verdana', sans-serif;
   --font-heading-size: 36px;
   --font-body-size: 42px;
 }
 
 body, html {
-margin: 0;
-padding: 0;
-height: 100%;
-display: flex;
-justify-content: center;
-align-items: center;
-background-color: #f0f0f0;
-font-family: var(--font-body); /* Используем основной шрифт для всего интерфейса */
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  font-family: var(--font-body);
 }
 
 #mainMenu {
-text-align: center;
+  text-align: center;
 }
 
 h1 {
-font-family: var(--font-heading); /* Используем шрифт для заголовков */
+  font-family: var(--font-heading);
 }
 
 .play-button {
-font-size: 24px;
-padding: 10px 20px;
-margin-top: 20px;
-cursor: pointer;
-font-family: var(--font-body); /* Основной шрифт */
+  font-size: 24px;
+  padding: 10px 20px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  border: none;
+  border-radius: 10px;
+  background-color: #4CAF50;
+  color: white;
+  transition: background-color 0.3s;
 }
 
-.control-button {
-font-size: 32px;
-padding: 0;
-border: 2px solid #000;
-background-color: #fff;
-color: #000;
-cursor: pointer;
-flex: 1;
-height: 100%;
-display: flex;
-justify-content: center;
-align-items: center;
-border-radius: 10px;
-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-transition: background-color 0.3s, transform 0.2s;
-font-family: var(--font-body); /* Основной шрифт */
+.play-button:hover {
+  background-color: #45a049;
 }
 
-.control-button:hover {
-background-color: #f0f0f0;
-transform: scale(1.1);
+.play-button:active {
+  background-color: #3e8e41;
 }
 
-.control-button:active {
-background-color: #ccc;
-transform: scale(0.9);
+/* Общие стили для игрового контейнера */
+#gameWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  max-width: 348px;
+  max-height: 610px;
+  background-color: #f0f0f0;
 }
 
-#gameContainer {
-width: 360px;
-height: 640px;
-display: flex;
-flex-direction: column;
-justify-content: flex-end;
-align-items: center;
-background-color: #f0f0f0;
-}
-
-canvas {
-width: 100%;
-height: calc(100% - 100px);
-image-rendering: pixelated;
+#gameCanvasContainer {
+  flex-grow: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
 }
 
 #controls {
-height: 100px;
-width: 100%;
-background-color: #ddd;
-display: flex;
-justify-content: space-around;
-align-items: center;
+  width: 100%;
+  height: 100px;
+  background-color: #ddd;
+  display: flex;
+  justify-content: space-around;
+  margin: 0;
+  padding: 0;
 }
 
-/* Отключаем эффект лупы на кнопках */
-button {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: rgba(0,0,0,0);
-  touch-action: manipulation;
+.control-button {
+  width: 80px;
+  height: 80px;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+}
+
+.control-button img {
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  margin: 0;
+  padding: 0;
 }
