@@ -1,6 +1,11 @@
 :root {
+<<<<<<< HEAD
   --font-heading: 'Arial Black', sans-serif;
   --font-body: 'Verdana', sans-serif;
+=======
+  --font-heading: 'Arial Black', sans-serif; /* Шрифт для заголовков */
+  --font-body: 'Verdana', sans-serif; /* Шрифт для основного текста */
+>>>>>>> 9dc983ca6ddf4c825fdb8b766af96dcad0868703
   --font-heading-size: 36px;
   --font-body-size: 42px;
 }
@@ -15,6 +20,10 @@ body, html {
   align-items: center;
   background-color: #f0f0f0;
   font-family: var(--font-body);
+<<<<<<< HEAD
+=======
+  overflow: hidden;
+>>>>>>> 9dc983ca6ddf4c825fdb8b766af96dcad0868703
 }
 
 #mainMenu {
@@ -36,6 +45,7 @@ h1 {
   background-color: #4CAF50;
   color: white;
   transition: background-color 0.3s;
+<<<<<<< HEAD
 }
 
 .play-button:hover {
@@ -76,6 +86,72 @@ h1 {
   justify-content: space-around;
   margin: 0;
   padding: 0;
+=======
+}
+
+.play-button:hover {
+  background-color: #45a049;
+}
+
+.play-button:active {
+  background-color: #3e8e41;
+}
+
+.control-button {
+  font-size: 32px;
+  padding: 0;
+  border: 2px solid #000;
+  background-color: #fff;
+  color: #000;
+  cursor: pointer;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s;
+  font-family: var(--font-body);
+}
+
+.control-button:hover {
+  background-color: #f0f0f0;
+}
+
+.control-button:active {
+  background-color: #ccc;
+  /* Убираем transform чтобы избежать исчезновения кнопок на некоторых устройствах */
+  transform: none;
+}
+
+#gameContainer {
+  width: 100%;
+  max-width: 360px;
+  height: 100%;
+  max-height: 640px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  background-color: #f0f0f0;
+  overflow: hidden;
+}
+
+canvas {
+  width: 100%;
+  height: calc(100% - 100px);
+  image-rendering: pixelated;
+}
+
+#controls {
+  height: 100px;
+  width: 100%;
+  background-color: #ddd;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+>>>>>>> 9dc983ca6ddf4c825fdb8b766af96dcad0868703
 }
 
 .control-button {
