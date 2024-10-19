@@ -117,10 +117,16 @@ function startGame() {
     });
 }
 
-// Функция для рисования закругленного прямоугольника с обводкой и градиентной заливкой
+// Функция для рисования закругленного прямоугольника с обводкой, градиентной заливкой, внешней и внутренней тенью
 function drawRoundedRectWithBorder(x, y, width, height, radius, borderWidth, gradient) {
     // Сохраняем текущее состояние контекста
     ctx.save();
+
+    // Внешняя тень
+    ctx.shadowOffsetX = -2;  // Смещение по оси X
+    ctx.shadowOffsetY = 2;   // Смещение по оси Y
+    ctx.shadowBlur = 2;      // Размытие
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';  // Цвет тени с прозрачностью 25%
 
     // Сначала рисуем обводку. Сжимаем область рисования на размер borderWidth, чтобы обводка рисовалась внутрь
     const innerX = x + borderWidth / 2;
@@ -132,7 +138,7 @@ function drawRoundedRectWithBorder(x, y, width, height, radius, borderWidth, gra
     // Создаем градиент для обводки
     const borderGradient = ctx.createLinearGradient(innerX, innerY + innerHeight, innerX + innerWidth, innerY);
     borderGradient.addColorStop(0, '#232323'); // Левый нижний угол
-    borderGradient.addColorStop(1, '#898989'); // Правый верхний угол
+    borderGradient.addColorStop(1, '#404040'); // Правый верхний угол
 
     // Настройки обводки
     ctx.strokeStyle = borderGradient;
@@ -151,39 +157,179 @@ function drawRoundedRectWithBorder(x, y, width, height, radius, borderWidth, gra
     ctx.quadraticCurveTo(innerX, innerY, innerX + innerRadius, innerY);
     ctx.closePath();
 
-    // Заливаем прозрачным цветом внутри (можно настроить как вам нужно)
+    // Заливаем прозрачным цветом внутри
     ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.fill();
 
     // Рисуем обводку
     ctx.stroke();
 
-    // Восстанавливаем состояние контекста
+    // Восстанавливаем состояние контекста для дальнейших операций
     ctx.restore();
+
+    // Внутренняя тень
+    ctx.save();
+    ctx.clip();  // Ограничиваем область рисования, чтобы тень была внутри формы
+
+    // Внутренняя тень
+    ctx.shadowOffsetX = -2;  // Смещение тени по X
+    ctx.shadowOffsetY = 2;   // Смещение тени по Y
+    ctx.shadowBlur = 2;      // Размытие
+    ctx.shadowColor = 'rgba(27, 27, 27, 0.8)';  // Цвет тени
+
+    // Рисуем прозрачный прямоугольник для создания внутренней тени
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+    ctx.fillRect(innerX, innerY, innerWidth, innerHeight);
+
+    ctx.restore();  // Восстанавливаем контекст
 }
 
-// Функция для отрисовки прямоугольников информации с обводкой и градиентом
+// Загрузка изображения линий
+const linesImage = new Image();
+linesImage.src = '/assets/images/lines.png'; // Укажите правильный путь к изображению
+
+// Функция для отрисовки иконки сожженных линий
+function drawLinesIcon(x, y, width, height) {
+    if (linesImage.complete) {
+        ctx.drawImage(linesImage, x - width / 2, y - height / 2, width, height);
+    } else {
+        // Если изображение еще не загружено, рисуем резервный вариант (например, текст)
+        ctx.fillStyle = '#FF007F';
+        ctx.font = '44px Arial';
+        ctx.fillText('≡', x, y);
+    }
+}
+
+// Загрузка изображения значка доллара
+const dollarIcon = new Image();
+dollarIcon.src = 'assets/images/dollar_icon.png'; // Укажите путь к изображению
+
+// Функция для отрисовки значка доллара
+function drawScoreIcon(x, y, iconWidth, iconHeight) {
+    // Проверяем, загрузилось ли изображение
+    if (dollarIcon.complete) {
+        ctx.drawImage(dollarIcon, x - iconWidth / 2, y - iconHeight / 2, iconWidth, iconHeight);
+    } else {
+        // Если изображение еще не загружено, подождем его загрузки и затем отрисуем
+        dollarIcon.onload = function() {
+            ctx.drawImage(dollarIcon, x - iconWidth / 2, y - iconHeight / 2, iconWidth, iconHeight);
+        };
+    }
+}
+
+// Загрузка изображения стрелки
+const arrowUpImage = new Image();
+arrowUpImage.src = '/assets/images/arrowup.png'; // Укажите правильный путь к изображению
+
+// Функция для отрисовки стрелки уровня
+function drawLevelIcon(x, y, width, height) {
+    if (arrowUpImage.complete) {
+        ctx.drawImage(arrowUpImage, x - width / 2, y - height / 2, width, height);
+    } else {
+        // Если изображение еще не загружено, рисуем резервный вариант (например, текст)
+        ctx.fillStyle = '#33FF33';
+        ctx.font = '44px Arial';
+        ctx.fillText('↑', x, y);
+    }
+}
+
+// Загрузка изображения стрелок для следующей карты
+const nextCardArrowImage = new Image();
+nextCardArrowImage.src = '/assets/images/arrows_nextcard.png'; // Укажите правильный путь к изображению
+
+// Функция для отрисовки стрелки над следующей картой
+function drawNextCardArrow(x, y, width, height) {
+    if (nextCardArrowImage.complete) {
+        ctx.drawImage(nextCardArrowImage, x - width / 2, y - height / 2, width, height);
+    } else {
+        // Если изображение еще не загружено, можно рисовать текст или placeholder
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('->', x, y); // Временный вариант
+    }
+}
+
+// Функция для отрисовки текста с одинаковыми настройками
+function drawTextWithNeonEffect(text, x, y, color) {
+    // Задаем неоновое свечение
+    ctx.shadowColor = color; // Цвет тени должен соответствовать цвету текста
+    ctx.shadowBlur = 20; // Размытие тени
+    ctx.shadowOffsetX = 0; // Смещение тени по X
+    ctx.shadowOffsetY = 0; // Смещение тени по Y
+
+    // Настройка цвета и шрифта
+    ctx.fillStyle = color;
+    ctx.font = '40px "Bebas Neue"';
+    ctx.textAlign = 'center';  // Центрирование текста по горизонтали
+    ctx.textBaseline = 'middle';  // Центрирование текста по вертикали
+
+    // Отрисовка текста
+    ctx.fillText(text, x, y);
+
+    // Очищаем тень после отрисовки текста
+    ctx.shadowBlur = 0;
+}
+
+// Функция для отрисовки прямоугольников информации с обводкой, тенью и текстом
 function drawInfoRectangles() {
     const texts = ['Next card', `Level: ${currentLevel}`, `Score: ${playerScore}`, `Lines: ${linesRemoved}`];
+    const valueColors = ['#33FF33', '#00FFFF', '#FF007F']; // Цвета для значений
     const borderRadius = 10; // Радиус закругления углов
     const borderWidth = 2; // Толщина обводки
+    const iconSize = 70; // Задаем размер иконок
 
     for (let i = 0; i < rectCount; i++) {
         const rectX = infoX + 10; // Отступ слева и справа
         const rectY = infoY + rectMargin * (i + 1) + infoRectHeight * i; // Отступ сверху
-        const text = texts[i]; // Текст для каждого прямоугольника
 
-        // Рисуем закругленный прямоугольник с обводкой и градиентом
+        // Рисуем закругленный прямоугольник с обводкой и тенью
         drawRoundedRectWithBorder(rectX, rectY, rectWidth, infoRectHeight, borderRadius, borderWidth);
 
-        // Рисуем текст
-        ctx.fillStyle = 'white';
-        ctx.font = '20px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, rectX + rectWidth / 2, rectY + infoRectHeight / 2);
+        // Если это первый прямоугольник для "Next card"
+        if (i === 0) {
+            const arrowX = rectX + rectWidth / 2; // Центрирование стрелки
+            const arrowY = rectY + infoRectHeight / 4; // Отступ сверху
+            drawNextCardArrow(arrowX, arrowY - 10, iconSize, iconSize); // Рисуем стрелку
+
+            // Задаем параметры для смещений и размеров карты
+            const cardX = rectX + rectWidth / 2; // Центрирование карты по ширине прямоугольника
+            const cardY = rectY + infoRectHeight / 2 + 15; // Смещение вниз от центра прямоугольника
+            const cardWidth = cellWidth; // Ширина карты
+            const cardHeight = cellHeight; // Высота карты
+
+            // Вызов функции для отрисовки следующей карты
+            drawNextCard(cardX, cardY, cardWidth, cardHeight);
+        }
+
+        // Если это не первый прямоугольник (он зарезервирован под "Next card"), рисуем значение
+        if (i > 0) {
+            const textValue = texts[i].split(": ")[1];  // Значение для отображения
+            const color = valueColors[i - 1];  // Соответствующий цвет
+            const textX = rectX + rectWidth / 2; // Центрирование текста по ширине прямоугольника
+            const textY = rectY + infoRectHeight / 2 + 25; // Смещение текста для центрирования
+
+            // Отрисовка текста с одинаковыми параметрами
+            drawTextWithNeonEffect(textValue, textX, textY, color);
+        }
+
+        // Рисуем соответствующие иконки для каждого блока (уровень, очки, линии)
+        if (i === 1) {
+            const iconX = rectX + rectWidth / 2; // Центрируем по ширине
+            const iconY = rectY + infoRectHeight / 4; // Центрируем по высоте
+            drawLevelIcon(iconX, iconY, iconSize, iconSize); // Рисуем стрелку
+        }
+        if (i === 2) {
+            const iconX = rectX + rectWidth / 2; // Центрируем по ширине прямоугольника
+            const iconY = rectY + infoRectHeight / 4; // Смещаем вверх от центра
+            drawScoreIcon(iconX, iconY, iconSize, iconSize); // Вызываем функцию для отрисовки иконки
+        }
+        if (i === 3) {
+            const iconX = rectX + rectWidth / 2; // Центрируем по ширине
+            const iconY = rectY + infoRectHeight / 4; // Центрируем по высоте
+            drawLinesIcon(iconX, iconY, iconSize, iconSize); // Рисуем иконку
+        }
     }
 }
+
 
 // Функция для получения случайной карты, не используемой на игровом поле
 function getRandomCard() {
@@ -707,21 +853,13 @@ function drawGame() {
     }
 }
 
-// Функция для отрисовки следующей карты с отступом
-function drawNextCard() {
+// Функция для отрисовки следующей карты
+function drawNextCard(cardX, cardY, cardWidth, cardHeight) {
+    // Отрисовка следующей карты
     if (nextCard) {
-        ctx.font = '20px "Arial Black", system-ui';
-        ctx.fillStyle = 'black';
-        ctx.textAlign = 'center';
-        ctx.fillText('Next card:', infoX + infoWidth / 2, infoY + 30);
-
-        const nextCardX = infoX + infoWidth / 2 - cellWidth / 2;
-        const nextCardY = infoY + 70;
-
-        // Растягиваем изображение следующей карты с отступом 1px
         const nextCardImage = getCardImage(nextCard);
         if (nextCardImage && nextCardImage.complete) {
-            ctx.drawImage(nextCardImage, nextCardX + 1, nextCardY + 1, cellWidth - 2, cellHeight - 2);
+            ctx.drawImage(nextCardImage, cardX - cardWidth / 2, cardY - cardHeight / 2, cardWidth, cardHeight);
         }
     }
 }
