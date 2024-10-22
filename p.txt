@@ -1,0 +1,167 @@
+// Функция для получения случайной карты, не используемой на игровом поле
+function getRandomCard() {
+    const availableCards = deck.filter(card => !usedCards.some(usedCard => usedCard.suit.name === card.suit.name && usedCard.value === card.value));
+    if (availableCards.length === 0) {
+        return null;
+    }
+    const randomIndex = Math.floor(Math.random() * availableCards.length);
+    const card = availableCards[randomIndex];
+    usedCards.push(card);
+    return card;
+}
+
+
+// Функция для проверки заполненности линий и их удаления
+function checkAndRemoveFullLines() {
+    const lines = Array(8).fill(0);
+
+    squares.forEach(square => {
+        const row = (square.y - gridY) / cellHeight;
+        lines[row]++;
+    });
+
+    let lineRemoved = false;
+    let firstLineRemoved = false;
+    let secondLineRemoved = false;
+    let firstRemovedRow = null;
+
+    lines.forEach((count, row) => {
+        if (count === 5) {
+            const line = squares.filter(square => (square.y - gridY) / cellHeight === row);
+            const scoreInfo = calculateScoreForLine(line);
+
+            if (scoreInfo.points > 0) {
+                playerScore += scoreInfo.points;
+                linesRemoved++;
+
+                squares = squares.filter(square => (square.y - gridY) / cellHeight !== row);
+
+                line.forEach(card => {
+                    usedCards = usedCards.filter(usedCard => usedCard !== card.card);
+                });
+
+                if (!firstLineRemoved) {
+                    removedLineInfo = { row, ...scoreInfo };
+                    firstRemovedRow = row;
+                    firstLineRemoved = true;
+                }
+
+                if (scoreInfo.name === 'Flush' || scoreInfo.name === 'Full House' || scoreInfo.name === '4 of a Kind' || scoreInfo.name === 'Straight Flush' || scoreInfo.name === 'Royal Flush') {
+                    if (row < 7 && lines[row + 1] > 0) {
+                        const lineBelow = squares.filter(square => (square.y - gridY) / cellHeight === row + 1);
+                        squares = squares.filter(square => (square.y - gridY) / cellHeight !== row + 1);
+
+                        lineBelow.forEach(card => {
+                            usedCards = usedCards.filter(usedCard => usedCard !== card.card);
+                        });
+
+                        secondLineRemoved = true;
+                        linesRemoved++;
+                        lines[row + 1] = 0;
+                    }
+                }
+
+                lineRemoved = true;
+            }
+        }
+    });
+
+    if (lineRemoved) {
+        // Проверяем, не пора ли поднять уровень
+        const newLevel = Math.floor(linesRemoved / LINES_PER_LEVEL) + 1;
+
+        if (newLevel > currentLevel) {
+            currentLevel = newLevel;
+            fallInterval = Math.max(100, fallInterval * ACCELERATION_FACTOR);
+            currentInterval = fallInterval;
+        }
+
+        isPaused = true;
+        drawGame();
+        drawRemovedLineInfo();
+
+        setTimeout(() => {
+            if (firstLineRemoved) {
+                squares.forEach(square => {
+                    if ((square.y - gridY) / cellHeight < firstRemovedRow) {
+                        square.y += cellHeight;
+                    }
+                });
+            }
+
+            if (secondLineRemoved) {
+                squares.forEach(square => {
+                    if ((square.y - gridY) / cellHeight < firstRemovedRow + 1) {
+                        square.y += cellHeight;
+                    }
+                });
+            }
+
+            // Проверка на конец игры перемещена сюда
+            checkGameOver();
+
+            if (!isGameOver) {
+                if (squares.length === 0) {
+                    squares.push(createNewSquare());
+                }
+                removedLineInfo = null;
+                isPaused = false;
+                requestAnimationFrame(updateGame);
+            }
+        }, 1000);
+    }
+
+    return lineRemoved;
+}
+
+
+
+// загрузка всех картинок
+function preloadImages() {
+    return new Promise((resolve) => {
+        const imagesToLoad = [
+            ...deck.map(card => getCardImagePath(card)), // Путь к картам
+            'assets/images/BUTTONLEFT.png',
+            'assets/images/BUTTONLEFTPRESSED.png',
+            'assets/images/BUTTONRIGHT.png',
+            'assets/images/BUTTONRIGHTPRESSED.png',
+            'assets/images/BUTTONDOWN.png',
+            'assets/images/BUTTONDOWNPRESSED.png',
+            'assets/images/lines.png',
+            'assets/images/dollar_icon.png',
+            'assets/images/arrowup.png',
+            'assets/images/arrows_nextcard.png',
+            'assets/images/cell.png',
+            'assets/images/tabletexture.png' // Добавляем текстуру фона
+        ];
+
+        let loadedImagesCount = 0;
+        const totalImages = imagesToLoad.length;
+
+        imagesToLoad.forEach(src => {
+            const img = new Image();
+            img.src = src;
+
+            img.onload = () => {
+                loadedImagesCount++;
+                const percentage = Math.floor((loadedImagesCount / totalImages) * 100);
+                updateProgressBar(percentage); // Обновляем прогресс загрузки
+
+                // Если изображение это текстура, создаем паттерн
+                if (src.includes('tabletexture')) {
+                    texturePattern = ctx.createPattern(img, 'repeat');
+                }
+
+                if (loadedImagesCount === totalImages) {
+                    resolve(); // Все изображения загружены
+                }
+            };
+
+            // Сохраняем загруженные изображения в объект cardImages для карт
+            if (src.includes('Card')) {
+                const [value, suit] = src.match(/Card(\w+)(\w)\.png/).slice(1, 3);
+                cardImages[`${value}${suit}`] = img;
+            }
+        });
+    });
+}

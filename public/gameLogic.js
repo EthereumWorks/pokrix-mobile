@@ -623,10 +623,10 @@ function calculateScoreForLine(line) {
     const counts = Object.values(valueCounts).sort((a, b) => b - a);
 
     if ((isStraight || isLowStraight) && isFlush) {
-        if (numericValues[0] === 10 || isLowStraight) {
+        if (numericValues[0] === 10 && numericValues[4] === 14) {
             return { name: 'Royal Flush', points: 1000 };
         } else {
-            return { name: 'Straight Flush', points: 500 };
+            return { name: 'Str. Flush', points: 500 };
         }
     }
     if (counts[0] === 4) return { name: '4 of a Kind', points: 250 };
@@ -639,6 +639,7 @@ function calculateScoreForLine(line) {
 
     return { name: 'No Combination', points: 0 };
 }
+
 
 // Функция для проверки заполненности линий и их удаления
 function checkAndRemoveFullLines() {
@@ -675,7 +676,7 @@ function checkAndRemoveFullLines() {
                     firstLineRemoved = true;
                 }
 
-                if (scoreInfo.name === 'Flush' || scoreInfo.name === 'Full House' || scoreInfo.name === '4 of a Kind' || scoreInfo.name === 'Straight Flush' || scoreInfo.name === 'Royal Flush') {
+                if (scoreInfo.name === 'Flush' || scoreInfo.name === 'Full House' || scoreInfo.name === '4 of a Kind' || scoreInfo.name === 'Str. Flush' || scoreInfo.name === 'Royal Flush') {
                     if (row < 7 && lines[row + 1] > 0) {
                         const lineBelow = squares.filter(square => (square.y - gridY) / cellHeight === row + 1);
                         squares = squares.filter(square => (square.y - gridY) / cellHeight !== row + 1);
