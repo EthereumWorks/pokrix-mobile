@@ -745,9 +745,8 @@ function checkAndRemoveFullLines() {
 
 // Функция для проверки условия окончания игры
 function checkGameOver() {
-    const middleColumnX = gridX + 2 * cellWidth; // Координата X для среднего столбца (если нумерация столбцов начинается с 0)
+    const middleColumnX = gridX + 2 * cellWidth;
 
-    // Проверяем, есть ли карты в верхнем ряду в среднем столбце
     const isMiddleColumnFull = squares.some(square => 
         square.x === middleColumnX && 
         square.y === gridY &&
@@ -756,12 +755,27 @@ function checkGameOver() {
 
     if (isMiddleColumnFull) {
         isGameOver = true;
-        document.getElementById('playAgainButton').style.display = 'block';
-        document.getElementById('controls').style.display = 'none';
+
+        // Скрываем кнопки управления, но сохраняем высоту контейнера
+        document.getElementById('leftButton').style.display = 'none';
+        document.getElementById('downButton').style.display = 'none';
+        document.getElementById('rightButton').style.display = 'none';
+        
+        // Показываем кнопку Play Again
+        document.getElementById('playAgainButton').style.display = 'inline-block';
 
         saveGameResult(playerName, playerScore, currentLevel, linesRemoved);
     }
 }
+
+document.getElementById('playAgainButton').addEventListener('click', () => {
+    // Скрываем кнопку Play Again и показываем кнопки управления при перезапуске
+    document.getElementById('playAgainButton').style.display = 'none';
+    document.getElementById('leftButton').style.display = 'flex';
+    document.getElementById('downButton').style.display = 'flex';
+    document.getElementById('rightButton').style.display = 'flex';
+    startGame(); // Перезапуск игры
+});
 
 // Функция для отображения сообщения "Game Over"
 async function drawGameOver() {
@@ -830,7 +844,7 @@ async function drawGameOver() {
     // Рисуем текст с количеством очков
     ctx.font = '24px "VT323"';
     ctx.fillStyle = '#3BFFFF';
-    ctx.fillText('Score', rectX + rectWidth / 2, rectY + 90);
+    ctx.fillText('Score:', rectX + rectWidth / 2, rectY + 90);
     ctx.fillText(`${playerScore} points`, rectX + rectWidth / 2, rectY + 120);
 
     // Если удалось получить ранг, рисуем его
@@ -1052,3 +1066,4 @@ document.getElementById('playButton').addEventListener('click', () => {
     document.getElementById('gameWrapper').style.display = 'flex';
     startGame(); // Запуск игры
 });
+

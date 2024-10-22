@@ -162,12 +162,42 @@ canvas {
 
 #controls {
   display: flex;
-  justify-content: space-around; /* Равномерно распределяет кнопки по ширине */
+  justify-content: space-around;
   align-items: center;
-  padding: 10px 0; /* Добавляем внутренние отступы сверху и снизу */
-  width: 100%; /* Панель управления занимает всю ширину */
-  height: 90px; /* Высота панели управления */
-  
+  padding: 10px 0;
+  width: 100%;
+  height: 100px; /* Устанавливаем фиксированную высоту */
+  box-sizing: border-box; /* Убедитесь, что padding не увеличивает размер блока */
+}
+
+/* Кнопка Play Again */
+.play-button {
+  display: none;
+  cursor: pointer;
+  background: none; /* Убираем фон */
+  border: none; /* Убираем границы */
+  padding: 0;
+  margin: 0;
+  width: 50%; /* Размер кнопки в 2 раза меньше оригинального */
+  height: auto; /* Пропорциональное изменение высоты */
+  transform-origin: center;
+}
+
+/* Убираем все эффекты наведения для кнопки */
+.play-button:hover,
+.play-button:focus,
+.play-button:active {
+  background: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* Кнопка Play Again */
+#playAgainButton {
+  width: auto;
+  height: auto;
+  display: none;
 }
 
 /* Стили для кнопок управления */
