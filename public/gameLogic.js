@@ -83,21 +83,66 @@ const ACCELERATION_FACTOR = 0.8;
 let currentLevel = 1;
 let linesRemoved = 0;
 
+function drawLoadingScreen() {
+    // Очищаем canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Настройка фона
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Рисуем текст "Loading"
+    ctx.fillStyle = '#FFF';
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2 - 40);
+
+    // Рисуем прогресс-бар (без процентов)
+    const barWidth = canvas.width * 0.6;
+    const barHeight = 20;
+    const barX = (canvas.width - barWidth) / 2;
+    const barY = canvas.height / 2;
+
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(barX, barY, barWidth, barHeight); // Полный размер
+
+    // Заполняем прогресс-бар
+    ctx.fillStyle = '#33FF33';
+    ctx.fillRect(barX, barY, barWidth * 1, barHeight); // Можно убрать, если не нужно отображать заполнение
+}
+
+function updateProgressBar(percentage) {
+    drawLoadingScreen(percentage);
+}
 
 // Определение устройства
 const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
 // Переход от главного меню к игре
-document.getElementById('playButton').addEventListener('click', () => {
+document.getElementById('startButton').addEventListener('click', () => {
     document.getElementById('mainMenu').style.display = 'none';
     document.getElementById('gameWrapper').style.display = 'flex';
-    startGame();
+    startGame(); // Запускаем игру
 });
 
-// Функция для начала игры
+
+
+function activateBackground() {
+    const gameWrapper = document.getElementById('gameWrapper');
+
+    // Устанавливаем фон после загрузки игры
+    gameWrapper.style.background = 'linear-gradient(135deg, #888888, #4A4A4A), url("assets/images/tabletexture.png")';
+    gameWrapper.style.backgroundSize = 'cover';
+    gameWrapper.style.backgroundBlendMode = 'multiply';
+}
+
 // Модифицированная функция для начала игры
 function startGame() {
-    preloadCardImages().then(() => {
+    drawLoadingScreen(0); // Отрисовываем начальный экран загрузки
+    preloadImages().then(() => {
+        // Включаем фон после загрузки картинок
+        activateBackground();
+
         usedCards = [];
         squares = [];
         playerScore = 0;
@@ -112,7 +157,9 @@ function startGame() {
         lastFallTime = 0;
         squares.push(createNewSquare());
         document.getElementById('playAgainButton').style.display = 'none';
-        document.getElementById('controls').style.display = 'flex';
+        document.getElementById('loadingScreen').style.display = 'none'; // Скрываем экран загрузки
+        document.getElementById('controls').style.display = 'flex'; // Показываем кнопки управления
+    
         requestAnimationFrame(updateGame); // Запуск игрового цикла после полной загрузки изображений
     });
 }
@@ -344,24 +391,54 @@ function getRandomCard() {
 }
 
 
-// Предварительная загрузка всех изображений карт
-function preloadCardImages() {
-    return new Promise((resolve) => {
-        let loadedImagesCount = 0;
-        const totalImages = deck.length;
+let texturePattern = null; // Переменная для хранения паттерна текстуры
 
-        deck.forEach(card => {
+// загрузка всех картинок
+function preloadImages() {
+    return new Promise((resolve) => {
+        const imagesToLoad = [
+            ...deck.map(card => getCardImagePath(card)), // Путь к картам
+            'assets/images/BUTTONLEFT.png',
+            'assets/images/BUTTONLEFTPRESSED.png',
+            'assets/images/BUTTONRIGHT.png',
+            'assets/images/BUTTONRIGHTPRESSED.png',
+            'assets/images/BUTTONDOWN.png',
+            'assets/images/BUTTONDOWNPRESSED.png',
+            'assets/images/lines.png',
+            'assets/images/dollar_icon.png',
+            'assets/images/arrowup.png',
+            'assets/images/arrows_nextcard.png',
+            'assets/images/cell.png',
+            'assets/images/tabletexture.png' // Добавляем текстуру фона
+        ];
+
+        let loadedImagesCount = 0;
+        const totalImages = imagesToLoad.length;
+
+        imagesToLoad.forEach(src => {
             const img = new Image();
-            img.src = getCardImagePath(card);
+            img.src = src;
 
             img.onload = () => {
                 loadedImagesCount++;
+                const percentage = Math.floor((loadedImagesCount / totalImages) * 100);
+                updateProgressBar(percentage); // Обновляем прогресс загрузки
+
+                // Если изображение это текстура, создаем паттерн
+                if (src.includes('tabletexture')) {
+                    texturePattern = ctx.createPattern(img, 'repeat');
+                }
+
                 if (loadedImagesCount === totalImages) {
                     resolve(); // Все изображения загружены
                 }
             };
 
-            cardImages[`${card.value}${card.suit.name[0]}`] = img;
+            // Сохраняем загруженные изображения в объект cardImages для карт
+            if (src.includes('Card')) {
+                const [value, suit] = src.match(/Card(\w+)(\w)\.png/).slice(1, 3);
+                cardImages[`${value}${suit}`] = img;
+            }
         });
     });
 }
@@ -373,68 +450,63 @@ function getCardImage(card) {
 
 // Добавление обработчиков событий в зависимости от устройства
 if (isMobile) {
-    document.getElementById('leftButton').addEventListener('touchstart', () => {
+    document.getElementById('leftButton').addEventListener('touchstart', (e) => {
+        e.preventDefault();  // Предотвращаем стандартное поведение
         moveLeft();
-        document.getElementById('leftButton').querySelector('img').src = 'assets/images/BUTTONLEFTPRESSED.png';
         document.getElementById('leftButton').classList.add('pressed');
     });
-    document.getElementById('leftButton').addEventListener('touchend', () => {
-        document.getElementById('leftButton').querySelector('img').src = 'assets/images/BUTTONLEFT.png';
+    document.getElementById('leftButton').addEventListener('touchend', (e) => {
+        e.preventDefault();  // Предотвращаем стандартное поведение
         document.getElementById('leftButton').classList.remove('pressed');
     });
 
-    document.getElementById('rightButton').addEventListener('touchstart', () => {
+    document.getElementById('rightButton').addEventListener('touchstart', (e) => {
+        e.preventDefault();
         moveRight();
-        document.getElementById('rightButton').querySelector('img').src = 'assets/images/BUTTONRIGHTPRESSED.png';
         document.getElementById('rightButton').classList.add('pressed');
     });
-    document.getElementById('rightButton').addEventListener('touchend', () => {
-        document.getElementById('rightButton').querySelector('img').src = 'assets/images/BUTTONRIGHT.png';
+    document.getElementById('rightButton').addEventListener('touchend', (e) => {
+        e.preventDefault();
         document.getElementById('rightButton').classList.remove('pressed');
     });
 
-    document.getElementById('downButton').addEventListener('touchstart', () => {
+    document.getElementById('downButton').addEventListener('touchstart', (e) => {
+        e.preventDefault();
         currentInterval = fastFallInterval;
-        document.getElementById('downButton').querySelector('img').src = 'assets/images/BUTTONDOWNPRESSED.png';
         document.getElementById('downButton').classList.add('pressed');
     });
-    document.getElementById('downButton').addEventListener('touchend', () => {
+    document.getElementById('downButton').addEventListener('touchend', (e) => {
+        e.preventDefault();
         currentInterval = fallInterval;
-        document.getElementById('downButton').querySelector('img').src = 'assets/images/BUTTONDOWN.png';
         document.getElementById('downButton').classList.remove('pressed');
     });
 } else {
     document.getElementById('leftButton').addEventListener('mousedown', () => {
         moveLeft();
-        document.getElementById('leftButton').querySelector('img').src = 'assets/images/BUTTONLEFTPRESSED.png';
         document.getElementById('leftButton').classList.add('pressed');
     });
     document.getElementById('leftButton').addEventListener('mouseup', () => {
-        document.getElementById('leftButton').querySelector('img').src = 'assets/images/BUTTONLEFT.png';
         document.getElementById('leftButton').classList.remove('pressed');
     });
 
     document.getElementById('rightButton').addEventListener('mousedown', () => {
         moveRight();
-        document.getElementById('rightButton').querySelector('img').src = 'assets/images/BUTTONRIGHTPRESSED.png';
         document.getElementById('rightButton').classList.add('pressed');
     });
     document.getElementById('rightButton').addEventListener('mouseup', () => {
-        document.getElementById('rightButton').querySelector('img').src = 'assets/images/BUTTONRIGHT.png';
         document.getElementById('rightButton').classList.remove('pressed');
     });
 
     document.getElementById('downButton').addEventListener('mousedown', () => {
         currentInterval = fastFallInterval;
-        document.getElementById('downButton').querySelector('img').src = 'assets/images/BUTTONDOWNPRESSED.png';
         document.getElementById('downButton').classList.add('pressed');
     });
     document.getElementById('downButton').addEventListener('mouseup', () => {
         currentInterval = fallInterval;
-        document.getElementById('downButton').querySelector('img').src = 'assets/images/BUTTONDOWN.png';
         document.getElementById('downButton').classList.remove('pressed');
     });
 }
+
 
 
 // Обработка событий нажатия клавиш
@@ -693,25 +765,75 @@ function checkGameOver() {
 
 // Функция для отображения сообщения "Game Over"
 async function drawGameOver() {
-    ctx.fillStyle = 'darkgray';
-    ctx.font = '36px "Verdana", system-ui';
+    // Параметры для прямоугольника
+    const rectWidth = 200;
+    const rectHeight = 250;
+    const rectX = gridX + (gridWidth - rectWidth) / 2; // Центрируем по ширине
+    const rectY = gridY + (gridHeight - rectHeight) / 2; // Центрируем по высоте
+    const borderRadius = 10;
+    const borderWidth = 4;
+    const borderColor = '#4A4A4A';
+    const backgroundColor = '#1C1C1C';
+    
+    // Внутренняя тень параметры
+    const shadowBlur = 10;
+    const shadowColor = 'rgba(255, 255, 255, 0.35)'; // Прозрачность 35%
+
+    // Рисуем закругленный прямоугольник с заливкой и обводкой
+    ctx.save(); // Сохраняем текущее состояние контекста
+
+    // Обводка
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = borderWidth;
+
+    // Заливка
+    ctx.fillStyle = backgroundColor;
+
+    // Рисуем прямоугольник
+    ctx.beginPath();
+    ctx.moveTo(rectX + borderRadius, rectY);
+    ctx.lineTo(rectX + rectWidth - borderRadius, rectY);
+    ctx.quadraticCurveTo(rectX + rectWidth, rectY, rectX + rectWidth, rectY + borderRadius);
+    ctx.lineTo(rectX + rectWidth, rectY + rectHeight - borderRadius);
+    ctx.quadraticCurveTo(rectX + rectWidth, rectY + rectHeight, rectX + rectWidth - borderRadius, rectY + rectHeight);
+    ctx.lineTo(rectX + borderRadius, rectY + rectHeight);
+    ctx.quadraticCurveTo(rectX, rectY + rectHeight, rectX, rectY + rectHeight - borderRadius);
+    ctx.lineTo(rectX, rectY + borderRadius);
+    ctx.quadraticCurveTo(rectX, rectY, rectX + borderRadius, rectY);
+    ctx.closePath();
+
+    // Внутренняя тень
+    ctx.clip();  // Ограничиваем область рисования
+
+    ctx.save();
+    ctx.shadowColor = shadowColor;
+    ctx.shadowBlur = shadowBlur;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    // Рисуем полупрозрачный прямоугольник для создания внутренней тени
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+    ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+
+    ctx.restore();  // Восстанавливаем контекст
+
+    // Заливаем и обводим прямоугольник
+    ctx.fill();
+    ctx.stroke();
+
+    // Рисуем текст "Game Over"
+    ctx.fillStyle = '#77FF77';
+    ctx.font = '40px "VT323"';
     ctx.textAlign = 'center';
+    ctx.fillText('Game Over', rectX + rectWidth / 2, rectY + 40);
 
-    const centerX = gridX + gridWidth / 2;
-    const centerY = gridY + gridHeight / 2 - 80;
+    // Рисуем текст с количеством очков
+    ctx.font = '24px "VT323"';
+    ctx.fillStyle = '#3BFFFF';
+    ctx.fillText('Score', rectX + rectWidth / 2, rectY + 90);
+    ctx.fillText(`${playerScore} points`, rectX + rectWidth / 2, rectY + 120);
 
-    ctx.fillText('GAME OVER', centerX, centerY);
-
-    ctx.shadowColor = 'black';
-    ctx.shadowOffsetX = 3;
-    ctx.shadowOffsetY = 3;
-    ctx.shadowBlur = 4;
-
-    ctx.font = '32px "Arial Black", sans-serif';
-    ctx.fillStyle = 'white';
-    ctx.fillText('You scored:', centerX, centerY + 60);
-    ctx.fillText(`${playerScore} points`, centerX, centerY + 100);
-
+    // Если удалось получить ранг, рисуем его
     if (playerScore > 0) {
         try {
             const response = await fetch('/api/top1000');
@@ -725,18 +847,19 @@ async function drawGameOver() {
             const resultRank = leaderboard.findIndex(player => player.player_name === playerName && player.score === playerScore) + 1;
 
             if (resultRank > 0) {
-                ctx.fillText('Your rank:', centerX, centerY + 140);
-                ctx.fillText(`${resultRank} of ${totalResults}`, centerX, centerY + 180);
+                ctx.font = '24px "VT323"';
+                ctx.fillStyle = '#EFEFEF';
+                ctx.fillText('Your rank:', rectX + rectWidth / 2, rectY + 160);
+                ctx.fillText(`${resultRank} of ${totalResults}`, rectX + rectWidth / 2, rectY + 190);
             }
         } catch (error) {
             console.error('Failed to fetch leaderboard:', error);
-            ctx.font = '24px "Arial Black", sans-serif';
             ctx.fillStyle = 'red';
-            ctx.fillText('Failed to get rank', centerX, centerY + 140);
+            ctx.fillText('Failed to get rank', rectX + rectWidth / 2, rectY + 160);
         }
     }
 
-    ctx.shadowColor = 'transparent';
+    ctx.restore(); // Восстанавливаем контекст
 }
 
 
@@ -764,14 +887,16 @@ function drawScore() {
 
 function drawRemovedLineInfo() {
     if (removedLineInfo) {
-        ctx.font = '18px "Arial Black", system-ui';
-        ctx.fillStyle = 'black';
+        // Устанавливаем шрифт VT323 и цвет D3D3D3
+        ctx.font = '24px "VT323", monospace';
+        ctx.fillStyle = '#D3D3D3'; // Устанавливаем цвет текста
         ctx.textAlign = 'center';
 
+        // Отрисовываем текст с названием комбинации и набранными очками
         ctx.fillText(
             `${removedLineInfo.name} +${removedLineInfo.points} points`,
             gridX + gridWidth / 2,
-            gridY + removedLineInfo.row * cellHeight + cellHeight / 3
+            gridY + removedLineInfo.row * cellHeight + cellHeight / 3 + 10
         );
     }
 }

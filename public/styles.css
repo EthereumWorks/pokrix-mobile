@@ -13,13 +13,101 @@ body, html {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f0f0f0;
-  font-family: var(--font-body);
+  background-color: #222222; /* Для основного экрана */
   overflow: hidden;
+  box-sizing: border-box; /* Это важно, чтобы исключить проблемы с отступами */
+  touch-action: manipulation;
+}
+
+
+
+/* Скрываем главные элементы во время загрузки */
+#mainMenu, #gameWrapper {
+  display: none;
+  background: none;
+  background-image: none; 
+}
+
+
+#gameCanvasContainer, canvas, #mainMenu {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Это поможет избежать проблем с размерами */
 }
 
 #mainMenu {
-  text-align: center;
+  width: 360px;
+  height: 640px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to top right, #111111, #2e2e2e);
+  background-size: 100% 100%; /* Растягиваем текстуру на весь экран */
+  background-blend-mode: overlay; /* Меняем режим наложения на overlay */
+  position: relative;
+}
+
+#iconContainer {
+  position: absolute;
+  top: 10px; /* Отступ сверху */
+  left: 10px; /* Отступ слева */
+  z-index: 100; /* Высокий z-index, чтобы иконка всегда была поверх */
+}
+
+#logo {
+  width: 50%; /* Уменьшаем логотип до 50% от исходного размера */
+  height: auto; /* Сохраняем пропорции логотипа */
+}
+
+#gameTitleContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#gameTitle {
+  width: 300px; /* В два раза больше стандартного */
+  height: auto;
+}
+
+.menu-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.menu-button img {
+  width: 200px; /* Ширина кнопки */
+  height: auto;
+}
+
+#startButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute; /* Позиционирование кнопки */
+  bottom: 40px; /* Отступ от нижней части экрана */
+  right: 20px; /* Отступ от правой части экрана */
+}
+
+#startButton:hover {
+}
+
+#howToPlayButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease;
+  position: absolute; /* Позиционирование кнопки */
+  bottom: 110px; /* Отступ над кнопкой Start */
+  right: 20px; /* Совпадение по правому краю с кнопкой Start */
+}
+
+#howToPlayButton:hover {
 }
 
 h1 {
@@ -54,10 +142,8 @@ h1 {
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  
-  background: linear-gradient(135deg,  #888888, #4A4A4A), url('assets/images/tabletexture.png'); /* Градиент + текстура */
-  background-size: cover; /* Растягиваем текстуру на весь контейнер */
-  background-blend-mode: multiply; /* Смешиваем градиент и текстуру */
+
+  background: black; /* Изначальный черный фон */
   overflow: hidden;
 }
 
@@ -70,6 +156,8 @@ canvas {
   width: 100%;
   height: 100%;
   image-rendering: pixelated;
+  position: relative;
+  z-index: 999;
 }
 
 #controls {
@@ -82,7 +170,10 @@ canvas {
   
 }
 
+/* Стили для кнопок управления */
 .control-button {
+  width: 80px; /* Задаем размеры кнопки */
+  height: 80px;
   background-color: transparent;
   border: none; /* Убираем обводку */
   padding: 0;
@@ -93,27 +184,84 @@ canvas {
   align-items: center;
   box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.5); /* Тень только влево и вниз */
   border-radius: 10px; /* Округляем углы */
-}
+  background-size: contain; /* Масштабируем изображение */
+  background-repeat: no-repeat; /* Избегаем повторения */
+  
 
-button img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;  /* Это подгоняет изображение, сохраняя пропорции внутри кнопки */
-  border: none;  /* Убираем любые границы у изображения */
-  padding: 0;
-  margin: 0;
-}
-
-button {
+  touch-action: manipulation; /* Отключает 300ms задержку для сенсорных устройств */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
-  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  -webkit-tap-highlight-color: transparent; /* Отключает мерцание при нажатии */
   touch-action: manipulation;
 }
 
-.pressed {
-  transform: scale(0.95); /* Уменьшает размер на 5% */
-  transition: transform 0.1s ease; /* Плавный переход */
-  box-shadow: none; /* Убирает тень */
+
+#leftButton {
+  background-image: url('assets/images/BUTTONLEFT.png'); /* Устанавливаем фоновое изображение */
+}
+
+#rightButton {
+  background-image: url('assets/images/BUTTONRIGHT.png');
+}
+
+#downButton {
+  background-image: url('assets/images/BUTTONDOWN.png');
+}
+
+/* Стили для нажатого состояния */
+.control-button.pressed {
+  transform: scale(0.95); /* Уменьшает кнопку на 5% */
+  background-size: contain;
+  box-shadow: none; /* Убираем тень */
+}
+
+#leftButton.pressed {
+  background-image: url('assets/images/BUTTONLEFTPRESSED.png');
+}
+
+#rightButton.pressed {
+  background-image: url('assets/images/BUTTONRIGHTPRESSED.png');
+}
+
+#downButton.pressed {
+  background-image: url('assets/images/BUTTONDOWNPRESSED.png');
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  touch-action: manipulation; /* Отключаем стандартные жесты */
+}
+
+#loadingScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(0, 0, 0);
+}
+
+#progressBarContainer {
+  width: 80%;
+  height: 30px;
+  background-color: #333;
+  border-radius: 15px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+#progressBar {
+  width: 0;
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.3s;
+}
+
+#loadingText {
+  color: white;
+  font-family: var(--font-body);
+  font-size: 18px;
 }

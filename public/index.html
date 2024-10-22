@@ -6,31 +6,46 @@
     <title>Pokrix Video Game</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="mainMenu">
-        <h1>Pokrix Video Game</h1>
-        <button id="playButton" class="play-button">Play</button>
+    <!-- Экран загрузки -->
+    <div id="loadingScreen" style="display: none; justify-content: center; align-items: center; height: 100vh; background-color: #000;">
+        <div id="progressBarContainer" style="width: 80%; background-color: #333;">
+            <div id="progressBar" style="width: 0; height: 20px; background-color: #4CAF50;"></div>
+        </div>
+        <p id="loadingText" style="color: white; margin-top: 10px;">Loading... 0%</p>
     </div>
+
+<!-- Главное меню -->
+<div id="mainMenu">
+    <div id="iconContainer">
+        <img id="logo" src="assets/images/pokrix_logo.png" alt="Pokrix Logo">
+    </div>
+    <div id="gameTitleContainer">
+        <img id="gameTitle" src="assets/images/LogoText.png" alt="Game Title">
+    </div>
+    <button id="howToPlayButton" class="menu-button">
+        <img src="assets/images/ButtonHowToPlay.png" alt="How To Play">
+    </button>
+    <button id="startButton" class="menu-button">
+        <img src="assets/images/buttonstart.png" alt="Start">
+    </button>
+    <span style="font-family: 'VT323', monospace; visibility: hidden;">Loading VT323</span>
+</div>
     
-    <div id="gameWrapper" style="display: none;">
-        <div id="gameCanvasContainer">
-            <canvas id="gameCanvas"></canvas>
-        </div>
-        <div id="controls">
-            <button id="leftButton" class="control-button">
-                <img id="leftButtonImage" src="assets/images/BUTTONLEFT.png" alt="Left">
-            </button>
-            <button id="downButton" class="control-button">
-                <img src="assets/images/BUTTONDOWN.png" alt="Down">
-            </button>
-            <button id="rightButton" class="control-button">
-                <img src="assets/images/BUTTONRIGHT.png" alt="Right">
-            </button>
-        </div>
-        <button id="playAgainButton" class="play-button" style="display: none;">Play Again</button>
+<!-- Игровая оболочка -->
+<div id="gameWrapper" style="display: none;">
+    <div id="gameCanvasContainer">
+        <canvas id="gameCanvas"></canvas>
     </div>
+    <div id="controls" style="display: none;"> <!-- Скрываем элементы управления по умолчанию -->
+        <button id="leftButton" class="control-button"></button>
+        <button id="downButton" class="control-button"></button>
+        <button id="rightButton" class="control-button"></button>
+    </div>
+    <button id="playAgainButton" class="play-button" style="display: none;">Play Again</button>
+</div>
     
     <script src="gameLogic.js"></script>
 </body>
