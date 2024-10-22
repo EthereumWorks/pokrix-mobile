@@ -409,7 +409,8 @@ function preloadImages() {
             'assets/images/arrowup.png',
             'assets/images/arrows_nextcard.png',
             'assets/images/cell.png',
-            'assets/images/tabletexture.png' // Добавляем текстуру фона
+            'assets/images/tabletexture.png',
+            'assets/images/cards/CardUu.png' // Добавляем карту единорога
         ];
 
         let loadedImagesCount = 0;
@@ -438,6 +439,11 @@ function preloadImages() {
             if (src.includes('Card')) {
                 const [value, suit] = src.match(/Card(\w+)(\w)\.png/).slice(1, 3);
                 cardImages[`${value}${suit}`] = img;
+            }
+
+            // Добавляем картинку карты единорога в объект cardImages
+            if (src.includes('CardUu.png')) {
+                cardImages['Uu'] = img; // Храним как 'Uu'
             }
         });
     });
@@ -945,15 +951,21 @@ function createNewSquare() {
     }
     nextCard = getRandomCard();
     
-    // Загружаем PNG изображение карты
-    const cardImage = new Image();
-    cardImage.src = getCardImagePath(card);
+    const isUnicornCard = Math.random() < 1 / 1000000; 
+
+    // Загружаем заранее предзагруженное изображение
+    let cardImage;
+    if (isUnicornCard) {
+        cardImage = cardImages['Uu']; // Используем предзагруженную картинку единорога
+    } else {
+        cardImage = getCardImage(card); // Стандартная карта
+    }
 
     return {
         x: gridX + 2 * cellWidth,
         y: gridY,
-        card,
-        image: cardImage  // Сохраняем PNG изображение в объекте карты
+        card, // Сохраняем оригинальные данные карты
+        image: cardImage  // Используем предзагруженное изображение карты
     };
 }
 
