@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
+
 </head>
 <body>
     <!-- Экран загрузки -->
@@ -36,6 +38,9 @@
     
 <!-- Игровая оболочка -->
 <div id="gameWrapper" style="display: none;">
+    <button id="skipTutorialButton">Skip Tutorial &gt;</button>
+    <button id="startTutorialButton" class="tutorial-button" style="display: none;">Start</button>
+
     <div id="gameCanvasContainer">
         <canvas id="gameCanvas"></canvas>
     </div>
@@ -43,7 +48,8 @@
         <button id="leftButton" class="control-button"></button>
         <button id="downButton" class="control-button"></button>
         <button id="rightButton" class="control-button"></button>
-        <img id="playAgainButton" src="assets/images/ButtonPlayAgain.png" alt="Play Again" class="play-button">
+        <img id="backToGameButton"  class="button no-hover" src="assets/images/ButtonBack.png" alt="Back to Game" style="display: none;">
+        <img id="playAgainButton" src="assets/images/ButtonPlayAgain.png" alt="Play Again">
     </div>
 </div>
     
