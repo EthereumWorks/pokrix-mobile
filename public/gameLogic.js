@@ -33,6 +33,7 @@ const rectMargin = 10; // Отступ между прямоугольникам
 const infoRectHeight = (infoHeight - (rectMargin * (rectCount + 1))) / rectCount;
 const rectWidth = infoWidth - 20; // Отступ по 10px с каждой стороны
 const borderRadius = 15; // Радиус закругления углов
+const topRectHeight = 60; // Высота блока Tips
 
 // Вычисляем размеры клеток для сетки
 const cellWidth = gridWidth / 5;
@@ -43,12 +44,23 @@ let tutorialStep = 0; // текущий шаг туториала
 
 // Константное множество шагов, при которых карты не должны отрисовываться
 const stepsWithoutFallingCards = new Set([0, 5, 7]);
+// Константа с шагами, где требуется клик по экрану
+const stepsRequiringScreenTap = new Set([0, 5, 10, 11, 17]); 
+const TUTORIAL_STEPS_WITH_REMOVED_LINE_INFO = [5, 17];
 
 let tutorialTaskCompleted = false; // Переменная для отслеживания выполнения задания на шаге туториала
 let tutorialStepTimeout; // Переменная для хранения таймера шага
 let isStep3TimeoutSet = false;  // Новый флаг для отслеживания установки таймера
-let step4Initialized = false; // Флаг для отслеживания инициализации 4 шага
-let step6Initialized = false; // Флаг для отслеживания инициализации 6 шага
+// Флаги для отслеживания инициализации шагов
+let step4Initialized = false; 
+let step6Initialized = false; 
+let step9Initialized = false; 
+let step12Initialized = false;
+let step13Initialized = false;
+let step14Initialized = false;
+let step15Initialized = false;
+let step16Initialized = false;
+
 let fallingCard = null;  // Карта, которая будет отслеживаться в падении в туториале
 let wasAttemptFailed = false; // Флаг для отслеживания, была ли предыдущая попытка неудачной
 
@@ -105,6 +117,9 @@ let isHighlightingFinished = false; // Флаг для проверки, зав�
 let frameOpacity = 1; // Начальная непрозрачность рамки для выделения объекта в туториале
 let frameDirection = -1; // Направление изменения прозрачности для выделения объекта в туториале
 const blinkSpeed = 0.0165;  // Скорость мерцания, изменяйте для увеличения/уменьшения частоты
+
+// Константы для карт в 12-м шаге
+const targetRow = 1; // строка, в которую должны падать карты
 
 function drawLoadingScreen() {
     // Очищаем canvas
@@ -212,29 +227,62 @@ function startTutorial() {
     });
 }
 
-// Функция для отрисовки окна помощи
-function drawHelpWindow() {
-    if (!isHelpOpen) return;
+// Функция для отрисовки покерной комбинации с выделением ярких карт
+function drawCombinationExample(ctx, x, y, highlightedCards, ...cards) {
+    const cardWidth = 27;  // Ширина одной карты
+    const cardHeight = 36; // Высота одной карты
+    const gap = 3;         // Пробел между картами
 
+    cards.forEach((card, index) => {
+        const cardImage = getCardImageByCode(card); // Получаем изображение карты по её коду
+        const cardX = x + (cardWidth + gap) * index; // Позиция по оси X для каждой карты
+
+        if (cardImage) {
+            // Проверяем, должна ли карта быть яркой (не блеклой)
+            const isHighlighted = highlightedCards.includes(card);
+
+            // Устанавливаем прозрачность для блеклых карт
+            ctx.globalAlpha = isHighlighted ? 1.0 : 0.2; // 1.0 — яркие карты, 0.5 — блеклые
+            ctx.drawImage(cardImage, cardX, y, cardWidth, cardHeight);
+        }
+    });
+    ctx.globalAlpha = 1.0; // Сбрасываем прозрачность
+}
+
+
+// Функция для получения изображения карты по коду, например "Ah"
+function getCardImageByCode(cardCode) {
+    const value = cardCode.slice(0, -1);      // Достоинство карты, например "A", "K"
+    const suit = cardCode.slice(-1);          // Масть карты, например "h", "d"
+    const suitMap = { 'h': 'hearts', 'd': 'diamonds', 's': 'spades', 'c': 'clubs' };
+    
+    // Ищем загруженное изображение для карты по масти и значению
+    return cardImages[`${value}${suitMap[suit][0]}`];
+}
+
+
+// Основная функция отрисовки окна помощи с комбинациями
+function drawHelpWindow() {
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
     const windowX = 3;
-    const windowY = 5; // Отступ сверху 5px
-    const windowWidth = canvas.width-10;
-    const windowHeight = canvas.height - 7; // Корректируем высоту, чтобы не выходить за пределы
+    const windowY = 5;
+    const windowWidth = canvas.width - 10;
+    const windowHeight = canvas.height - 7;
     const borderRadius = 10;
 
+    // Настройки окна помощи
     ctx.save();
-    ctx.globalAlpha = 0.95; // Прозрачность 95%
-    
-    // Градиентная заливка фона
+    ctx.globalAlpha = 0.95;
     const gradient = ctx.createLinearGradient(windowX, windowY + windowHeight, windowX + windowWidth, windowY);
     gradient.addColorStop(0, '#1C1C1C');
     gradient.addColorStop(1, '#272727');
     ctx.fillStyle = gradient;
+    ctx.strokeStyle = '#4A4A4A';
+    ctx.lineWidth = 4;
 
-    ctx.strokeStyle = '#4A4A4A'; // Цвет обводки
-    ctx.lineWidth = 4; // Толщина обводки
-
-    // Рисуем закругленный прямоугольник
+    // Закругленный прямоугольник
     ctx.beginPath();
     ctx.moveTo(windowX + borderRadius, windowY);
     ctx.lineTo(windowX + windowWidth - borderRadius, windowY);
@@ -246,15 +294,72 @@ function drawHelpWindow() {
     ctx.lineTo(windowX, windowY + borderRadius);
     ctx.quadraticCurveTo(windowX, windowY, windowX + borderRadius, windowY);
     ctx.closePath();
-
     ctx.fill();
     ctx.stroke();
 
-    // Заголовок окна помощи
+    // Заголовок
     ctx.fillStyle = '#EFEFEF';
     ctx.font = '24px VT323';
     ctx.textAlign = 'center';
     ctx.fillText('Poker Combinations & Points', windowWidth / 2, windowY + 40);
+
+    // Отрисовка горизонтальных полос
+    ctx.strokeStyle = '#77FF77';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(windowX + 20, windowY + 70); // Первая линия
+    ctx.lineTo(windowX + 110, windowY + 70);
+    ctx.moveTo(windowX + windowWidth - 110, windowY + 70); // Вторая линия
+    ctx.lineTo(windowX + windowWidth - 20, windowY + 70);
+    ctx.stroke();
+
+    // Отрисовка знаков мастей
+    ctx.font = '30px "Noto Sans Symbols2"';
+    ctx.fillStyle = 'transparent'; // Прозрачная заливка
+    ctx.strokeStyle = '#77FF77'; // Цвет обводки
+    ctx.lineWidth = 1;
+
+    const symbols = ['♥', '♠', '♦', '♣'];
+    let symbolX = windowWidth / 2 - 35; // Подкорректированное начальное положение для центрирования
+
+    symbols.forEach(symbol => {
+        ctx.strokeText(symbol, symbolX, windowY + 75);
+        symbolX += 25; // Более плотное расстояние между символами
+    });
+
+    const baseY = windowY + 120; // Начальная Y-позиция для первой строки
+    const rowHeight = 45; // Высота строки, включая отступ
+
+    // Определяем каждую комбинацию и ее выделенные карты
+    const combinations = [
+        { name: 'Royal Flush', cards: ["Ah", "Kh", "Qh", "Jh", "Th"], highlightedCards: ["Ah", "Kh", "Qh", "Jh", "Th"], points: 'x 1000' },
+        { name: 'Str. flush', cards: ["6s", "7s", "8s", "9s", "Ts"], highlightedCards: ["6s", "7s", "8s", "9s", "Ts"], points: 'x 500' },
+        { name: '4 of a kind', cards: ["Kh", "Ks", "Kd", "Kc", "7d"], highlightedCards: ["Kh", "Ks", "Kd", "Kc"], points: 'x 250' },
+        { name: 'Flush', cards: ["As", "Js", "7s", "5s", "2s"], highlightedCards: ["As", "Js", "7s", "5s", "2s"], points: 'x 100' },
+        { name: 'Straight', cards: ["4s", "5h", "6s", "7h", "8s"], highlightedCards: ["4s", "5h", "6s", "7h", "8s"], points: 'x 80' },
+        { name: '3 of a kind', cards: ["8h", "8s", "8d", "As", "4h"], highlightedCards: ["8h", "8s", "8d"], points: 'x 60' },
+        { name: 'Two pair', cards: ["As", "Ad", "Js", "Jd", "3d"], highlightedCards: ["As", "Ad", "Js", "Jd"], points: 'x 40' },
+        { name: 'One pair', cards: ["Jh", "Js", "7h", "5s", "2d"], highlightedCards: ["Jh", "Js"], points: 'x 20' },
+        { name: 'High card', cards: ["Ad", "Qh", "6s", "4c", "3c"], highlightedCards: ["Ad"], points: 'x -' }
+    ];
+
+    combinations.forEach((combination, index) => {
+        const rowY = baseY + index * rowHeight;
+
+        // Название комбинации, выравненное справа
+        ctx.fillStyle = '#EFEFEF';
+        ctx.font = '22px VT323';
+        ctx.textAlign = 'right';
+        ctx.fillText(combination.name, windowX + 108, rowY);
+
+        // Карты комбинации с выделением ярких карт
+        drawCombinationExample(ctx, windowX + 120, rowY - 20, combination.highlightedCards, ...combination.cards);
+
+        // Очки за комбинацию, выравненные слева
+        ctx.fillStyle = '#00FFFF';
+        ctx.textAlign = 'left';
+        ctx.fillText(combination.points, windowX + 282, rowY);
+    });
 
     ctx.restore();
 }
@@ -281,8 +386,15 @@ function toggleHelpWindow() {
 
     if (isHelpOpen) {
         drawHelpWindow();
+        // Условие для шага 7 в туториале
+        if (isTutorialMode && tutorialStep === 7) {
+            tutorialStep++;
+            checkTutorialStepCompletion();  // Переход на следующий шаг туториала
+        }
     } else {
-        requestAnimationFrame(updateGame);
+        if (isTutorialMode) requestAnimationFrame(updateTutorial);
+        else
+            requestAnimationFrame(updateGame);
     }
 }
 
@@ -310,7 +422,8 @@ canvas.addEventListener('click', (event) => {
 
     // Проверка клика по области блока "Help"
     if (clickX >= rectX && clickX <= rectX + rectWidth && clickY >= rectY && clickY <= rectY + rectHeight) {
-        toggleHelpWindow();  // Вызов функции toggleHelpWindow при клике на "Help"
+        if (!isHelpOpen)
+            toggleHelpWindow();  // Вызов функции toggleHelpWindow при клике на "Help"
     }
 });
 
@@ -324,15 +437,14 @@ document.getElementById('skipTutorialButton').addEventListener('click', () => {
 canvas.addEventListener('click', handleScreenTap);
 //canvas.addEventListener('touchstart', handleScreenTap);
 
-// Функция для обработки нажатий на экран во время туториала
 function handleScreenTap() {
-  
-    // На шаге 0 сразу переходим на следующий шаг
-    if (isTutorialMode && (tutorialStep === 0 || tutorialStep === 5)) {
+    // Переход на следующий шаг, если текущий шаг есть в stepsRequiringScreenTap
+    if (isTutorialMode && stepsRequiringScreenTap.has(tutorialStep)) {
         tutorialStep++;
+        checkTutorialStepCompletion();  // Проверяем завершение текущего шага и переход на следующий
     }
     
-    updateControlButtonsAccessibility();  // Обновляем кнопки после перехода на новый шаг
+    updateControlButtonsAccessibility();  // Обновляем доступность кнопок для нового шага
 }
 
 function clearButtonHighlights() {
@@ -458,15 +570,45 @@ function showMessage(message, x, y, width, height, trianglePosition, alpha) {
     drawMessageBox(x, y, width, height, message, trianglePosition, alpha);
 }
 
+// Функция для установки следующей падающей карты
+function setNextFallingCard(card) {
+    fallingCard = {
+        x: gridX + 2 * cellWidth,    // Начальное положение (вторая колонка)
+        y: gridY,                    // Начальное положение сверху
+        card: {                      // Определяем масть и значение карты
+            suit: { name: card.suit }, // Масть карты
+            value: card.value          // Номинал карты
+        },
+        image: getCardImage({ suit: { name: card.suit }, value: card.value }) // Загружаем изображение карты
+    };
+
+    // Добавляем падающую карту в массив `squares`
+    squares.push(fallingCard);
+}
+
+// показ сообщения о неправильной установки карт
+function showFlushFailedMessage() {
+    drawCharacterImage(canvas.width/2 + 10 , 80, 0.9);  // Показ картинки с сообщением
+    showMessage(
+        "Whoa there, partner! Aim for that second row to line up a flush. Give it another go!",
+        canvas.width / 2 + 10, // X координата
+        270,                   // Y координата
+        140,                   // Ширина
+        190,                    // Высота
+        1,                       // Позиция хвостика облака
+        0.9
+    );
+}
+
 function showTutorialStep() {
 
     switch (tutorialStep) {
         case 0:
-            drawCharacterImage(canvas.width / 2 - 140, 30, 0.9);  // Только картинка персонажа
+            drawCharacterImage(canvas.width / 2 - 140, 40, 0.9);  // Только картинка персонажа
             showMessage(
                 "Howdy, partner! I'm Royle Branson, here to show you how to outplay 'em all.", 
                 canvas.width / 2 - 160, // X координата
-                210,                   // Y координата
+                220,                   // Y координата
                 310,                   // Ширина
                 120,                    // Высота
                 0,                       // позиция хвостика облака
@@ -475,6 +617,8 @@ function showTutorialStep() {
             drawStartButton("Next", canvas.width / 2 - 85, 420, 170, 50); // Рисуем кнопку "Start"
             step4Initialized = false;
             step6Initialized = false;
+            step9Initialized = false;
+            step12Initialized = false;
             break;
         
         case 1:
@@ -536,7 +680,7 @@ function showTutorialStep() {
                 squares = [];
             
                 // Размещаем 4 карты в нижнем ряду
-                placeFourCardsAtBottom(["3c", "7d", "Ah", "Qs"]);
+                placeFourCardsAtBottom(["3c", "7d", "Ah", "Qs"],0);
             
                 // Устанавливаем туз крестей как следующую падающую карту
                 fallingCard = {
@@ -577,24 +721,24 @@ function showTutorialStep() {
 
         case 5:
 
-            drawCharacterImage(canvas.width / 2 - 140, 30, 0.9); 
+            drawCharacterImage(canvas.width / 2 - 140, 40, 0.9); 
             showMessage(
                 "Nice shootin'! You lined up 5 cards, hit a Pair, and cleared the row for 20 points. Keep ‘em combos comin', partner!", 
-                canvas.width / 2 - 160, 210, 220, 180, 0, 0.9
+                canvas.width / 2 - 160, 220, 220, 180, 0, 0.9
             );
 
             // Координаты и размеры рамки для выделения сообщения о сожженной линии
-            const frameX = gridX + gridWidth / 2 - 100;
-            const frameY = gridY + removedLineInfo.row * cellHeight + cellHeight / 3 -10;
-            const frameWidth = 200;
-            const frameHeight = 40;
+            const frameX = gridX + 4 ;
+            const frameY = gridY + removedLineInfo.row * cellHeight +4;
+            const frameWidth = gridWidth-8;
+            const frameHeight = cellHeight-8;
 
             // Вызов функции для рисования мигающей рамки
             drawFlashingFrame(frameX, frameY, frameWidth, frameHeight);
 
             // Координаты и размеры для информации о "Score" в информационном табло
             const scoreX = infoX + 10; // Используем те же значения, что и для информационного табло
-            const scoreY = infoY + rectMargin * 3 + infoRectHeight * 2; // Положение блока "Score"
+            const scoreY = infoY + rectMargin * 4 + infoRectHeight * 3 - 5; // Положение блока "Score"
             const scoreWidth = rectWidth;
             const scoreHeight = infoRectHeight;
 
@@ -610,27 +754,16 @@ function showTutorialStep() {
 
             // Удаляем сообщение о сожженной линии перед началом нового задания
             removedLineInfo = null;
-            // Проверяем, был ли уже инициализирован 4 шаг
+            // Проверяем, был ли уже инициализирован 6 шаг
             if (!step6Initialized) {
                 // Удаляем все карты с поля перед размещением новых
                 squares = [];
             
                 // Размещаем 4 карты в нижнем ряду
-                placeFourCardsAtBottom(["6h", "Ac", "Ah", "8s"]);
-            
-                // Устанавливаем туз крестей как следующую падающую карту
-                fallingCard = {
-                    x: gridX + 2 * cellWidth,  // Начальное положение (вторая колонка)
-                    y: gridY,                  // Начальное положение сверху
-                    card: {                    // Определяем масть и значение карты
-                        suit: { name: 'clubs' }, // Масть крестей
-                        value: '6'               // Туз
-                    },
-                    image: getCardImage({ suit: { name: 'clubs' }, value: '6' })  // Изображение карты Ac
-                };
-            
-                // Добавляем карту 6c в массив падающих карт
-                squares.push(fallingCard);
+                placeFourCardsAtBottom(["6h", "Ac", "Ah", "8s"],0);
+                
+                // Устанавливаем 6 крестей как следующую падающую карту
+                setNextFallingCard({ suit: 'clubs', value: '6' });
             
                 // Отмечаем, что шаг 4 был инициализирован
                 step6Initialized = true;
@@ -656,32 +789,234 @@ function showTutorialStep() {
 
         case 7:
             
-        drawCharacterImage(canvas.width / 2 - 140, 30, 0.9); 
+        drawCharacterImage(canvas.width / 2 - 140, 40, 0.9); 
         showMessage(
-            "Well done! That’s Two Pair! Higher combos bring higher points—tap that question mark top-right to check 'em out and move on!", 
-            canvas.width / 2 - 160, 210, 220, 220, 0, 0.9
+            "Nice work, that’s Two Pair! Bigger hands score bigger points—hit that question mark up top to see the combos and prizes, then tap 'Back to Game' to keep rolling", 
+            canvas.width / 2 - 160, 220, 220, 250, 0, 0.9
         );
 
-        // Вызов функции для рисования мигающей рамки
-        drawFlashingFrame(frameX, frameY, frameWidth, frameHeight);
+        // Координаты и размеры для верхнего блока в информационной панели
+        const topInfoX = infoX + 10;
+        const topInfoY = infoY + rectMargin; // Положение верхнего блока
+        const topInfoWidth = rectWidth;
+        const topInfoHeight = topRectHeight;
 
-        // Вызов функции для рисования мигающей рамки вокруг информации о набранных очках
-        drawFlashingFrame(scoreX, scoreY, scoreWidth, scoreHeight);
-
-        // Отображаем кнопку "Continue" под сообщением персонажа
-        drawStartButton("Next", canvas.width / 2 - 120, 410, 140, 50); // Рисуем кнопку "Start"
+        // Вызов функции для рисования мигающей рамки вокруг верхнего блока
+        drawFlashingFrame(topInfoX, topInfoY, topInfoWidth, topInfoHeight);
 
         break;
 
-        default:
+        case 8:       
+
+            // Подсветка кнопки Back to Game
+            const backButton = document.getElementById('backToGameButton');
+            backButton.classList.add('highlight'); // Используем тот же класс, что и для кнопок управления
+
+            // Убираем подсветку при клике, который переводит на следующий шаг
+            backButton.addEventListener('click', () => {
+                backButton.classList.remove('highlight');
+                tutorialTaskCompleted = true;
+                checkTutorialStepCompletion(); // Переход к следующему шагу
+            });
             break;
-    
-            break;            
+
+        case 9:   
+
+            // Проверяем, был ли уже инициализирован 4 шаг
+            if (!step9Initialized) {
+                // Удаляем все карты с поля перед размещением новых
+                squares = [];
+            
+                // Размещаем 4 карты в нижнем ряду
+                placeFourCardsAtBottom(["4c", "9d", "Kh", "6s"],2);
+            
+                // Устанавливаем туз крестей как следующую падающую карту
+                fallingCard = {
+                    x: gridX + 2 * cellWidth,  // Начальное положение (вторая колонка)
+                    y: gridY,                  // Начальное положение сверху
+                    card: {                    // Определяем масть и значение карты
+                        suit: { name: 'clubs' }, // Масть крестей
+                        value: 'J'               // Валет
+                    },
+                    image: getCardImage({ suit: { name: 'clubs' }, value: 'A' })  // Изображение карты Ac
+                };
+            
+                // Добавляем карту Ac в массив падающих карт
+                squares.push(fallingCard);
+            
+                // Отмечаем, что шаг 4 был инициализирован
+                step9Initialized = true;
+            }            
+
+            drawCharacterImage(canvas.width/2 + 10 , 80, 0.9);  // Показ картинки с сообщением
+            // Изменяем сообщение в зависимости от того, была ли предыдущая попытка неудачной
+            let messageForStep9 = wasAttemptFailed 
+                ? "Missed it, partner! Try again and fill that bottom spot!"
+                : "Alright, partner! Place that last card to fill up the line. Let’s see what we get!";
+
+            showMessage(
+                messageForStep9,
+                canvas.width / 2 + 10, // X координата
+                270,                   // Y координата
+                140,                   // Ширина
+                200,                    // Высота
+                1,                       // Позиция хвостика облака
+                0.9
+            );
+        
+            break;
+        
+        case 10:   
+
+            drawCharacterImage(canvas.width / 2 - 140, 40, 0.9); 
+            showMessage(
+                "A high card holds its ground, partner. Only a pair or better clears the line!", 
+                canvas.width / 2 - 160, 220, 220, 150, 0, 0.9
+            );
+
+
+
+            drawStartButton("Next", canvas.width / 2 - 85, 410, 170, 50); // Рисуем кнопку "Next"
+
+        break;
+
+        case 11:   
+
+            drawCharacterImage(canvas.width / 2 - 140, 40, 0.9); 
+            showMessage(
+                "Here's a trick, partner: make a flush or better on top, and both lines burn. Remember—lines go across! Now, aim for a flush with these next cards.", 
+                canvas.width / 2 - 160, 220, 220, 220, 0, 0.9
+            );
+
+            drawStartButton("Next", canvas.width / 2 - 45, 470, 170, 50); // Рисуем кнопку "Next"
+            
+            nextCard = { 
+                suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
+                value: '2' // номинал — двойка
+            };
+            
+
+            break;
+        
+        case 12:
+
+            if (!step12Initialized) {
+
+                // Удаляем все карты с поля, кроме 5 карт в нижнем ряду
+                squares = squares.filter(square => {
+                    const row = (square.y - gridY) / cellHeight;
+                    return row === 7; // Оставляем только карты в нижнем ряду
+                });
+                // Устанавливаем 2 бубен (2d) как следующую падающую карту
+                setNextFallingCard({ suit: 'diamonds', value: '2' });   
+                
+                nextCard = { 
+                    suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
+                    value: '5' // номинал
+                };  
+
+                // Отмечаем, что шаг 12 был инициализирован
+                step12Initialized = true;
+            }
+
+            if(wasAttemptFailed)
+                showFlushFailedMessage();
+
+            break;
+
+        case 13:
+
+            if (!step13Initialized) {
+                // Устанавливаем 5d как следующую падающую карту
+                setNextFallingCard({ suit: 'diamonds', value: '5' }); 
+                
+                nextCard = { 
+                    suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
+                    value: '9' // номинал
+                }; 
+                
+                // Отмечаем, что шаг 13 был инициализирован
+                step13Initialized = true;
+            }
+
+            if(wasAttemptFailed)
+                showFlushFailedMessage();
+
+            break;
+
+        case 14:
+
+            if (!step14Initialized) {
+                // Устанавливаем 5d как следующую падающую карту
+                setNextFallingCard({ suit: 'diamonds', value: '9' });   
+                
+                nextCard = { 
+                    suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
+                    value: 'K' // номинал
+                }; 
+                
+                // Отмечаем, что шаг 14 был инициализирован
+                step14Initialized = true;
+            }
+
+            if(wasAttemptFailed)
+                showFlushFailedMessage();
+
+            break;
+
+        case 15:
+
+            if (!step15Initialized) {
+                // Устанавливаем 5d как следующую падающую карту
+                setNextFallingCard({ suit: 'diamonds', value: 'K' });  
+                
+                nextCard = { 
+                    suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
+                    value: 'A' // номинал
+                }; 
+                
+                // Отмечаем, что шаг 15 был инициализирован
+                step15Initialized = true;
+            }
+
+            if(wasAttemptFailed)
+                showFlushFailedMessage();
+
+            break;
+
+        case 16:
+
+            if (!step16Initialized) {
+                // Устанавливаем 5d как следующую падающую карту
+                setNextFallingCard({ suit: 'diamonds', value: 'A' });           
+                // Отмечаем, что шаг 16 был инициализирован
+                step16Initialized = true;
+            }
+
+            if(wasAttemptFailed)
+                showFlushFailedMessage();
+
+            break;
+
+        case 17:
+
+            drawCharacterImage(canvas.width / 2 - 140, 40, 0.9); 
+            showMessage(
+                "Nice job! That flush not only scored big, but it burned the line below it too.", 
+                canvas.width / 2 - 160, 220, 220, 170, 0, 0.9
+            );
+
+            //drawStartButton("Next", canvas.width / 2 - 45, 430, 170, 50); // Рисуем кнопку "Next"
+
+            break;
+
+        default:
+            break;        
     }
 }
 
-// Функция для размещения 4 карт внизу экрана
-function placeFourCardsAtBottom(cardStrings) {
+// Функция для размещения 4 карт внизу экрана с возможностью прорехи
+function placeFourCardsAtBottom(cardStrings, emptySlotIndex = 0) {
     const suitMap = {
         'c': 'clubs',
         'd': 'diamonds',
@@ -689,13 +1024,19 @@ function placeFourCardsAtBottom(cardStrings) {
         's': 'spades'
     };
 
+    let cardPositionIndex = 0; // Индекс позиции для размещения карт
+
     cardStrings.forEach((cardString, index) => {
-        // Разбираем строку: последняя буква — это масть, остальное — номинал карты
+        // Пропускаем указанный индекс для пустого слота
+        if (cardPositionIndex === emptySlotIndex) {
+            cardPositionIndex++;
+        }
+
+        // Разбираем строку карты, чтобы получить масть и номинал
         const value = cardString.slice(0, -1);
         const suitChar = cardString.slice(-1);
         const suit = suitMap[suitChar];
 
-        // Проверяем, существуют ли масть и номинал карты
         if (!suit || !value) {
             console.error(`Invalid card string: ${cardString}`);
             return;
@@ -709,13 +1050,15 @@ function placeFourCardsAtBottom(cardStrings) {
             return;
         }
 
-        // Добавляем карту в нижний ряд
+        // Добавляем карту в нижний ряд, учитывая смещение для пустого слота
         squares.push({
-            x: gridX + (index + 1) * cellWidth, // Размещаем карты в ячейках 2, 3, 4 и 5 снизу
-            y: gridY + 7 * cellHeight,          // Нижний ряд
-            card,                               // Карта
-            image: cardImage                    // Изображение карты
+            x: gridX + cardPositionIndex * cellWidth, // Позиция с учетом прорехи
+            y: gridY + 7 * cellHeight,                 // Нижний ряд
+            card,                                      // Карта
+            image: cardImage                           // Изображение карты
         });
+
+        cardPositionIndex++; // Увеличиваем индекс для следующей карты
     });
 }
 
@@ -888,7 +1231,6 @@ function drawInfoRectangles() {
     const iconSize = 70; // Размер иконок
 
     // Устанавливаем фиксированную высоту для каждого блока
-    const topRectHeight = 60; // Высота блока Tips
     const nextCardRectHeight = infoRectHeight + 30; // Увеличенная высота блока Next card
     const lowerRectHeight = infoRectHeight; // Высота для нижних блоков
 
@@ -1133,8 +1475,8 @@ document.addEventListener('keyup', (event) => {
             document.getElementById('rightButton').classList.remove('pressed');
             break;
         case 'ArrowDown':
-            document.getElementById('downButton').classList.add('pressed');
-            currentInterval = fastFallInterval;
+            document.getElementById('downButton').classList.remove('pressed');
+            currentInterval = fallInterval;
 
     }
 });
@@ -1310,7 +1652,7 @@ function checkAndRemoveFullLines() {
             currentInterval = fallInterval;
         }
 
-        isPaused = true;
+        if (!isHelpOpen ) isPaused = true;
         drawGame();
         drawRemovedLineInfo();
 
@@ -1334,18 +1676,19 @@ function checkAndRemoveFullLines() {
             // Проверка на конец игры перемещена сюда
             checkGameOver();
 
-            if (!isGameOver) {
+            if (!isGameOver ) {
                 if (squares.length === 0) {
                     squares.push(createNewSquare());
                 }
 
 
                 // Добавляем проверку на шаг туториала
-                if (!(isTutorialMode && tutorialStep === 5)) {
-                    removedLineInfo = null; // Только если не на шаге 5
+                // Добавляем проверку на шаг туториала
+                if (!(isTutorialMode && TUTORIAL_STEPS_WITH_REMOVED_LINE_INFO.includes(tutorialStep))) {
+                    removedLineInfo = null; // Только если текущий шаг не входит в массив
                 }
 
-                isPaused = false;
+                if (!isHelpOpen ) isPaused = false;
                 if (isTutorialMode) requestAnimationFrame(updateTutorial); 
                 else requestAnimationFrame(updateGame);
             }
@@ -1616,6 +1959,9 @@ function drawGame() {
 
     drawRemovedLineInfo();
 
+    if (isTutorialMode && isHelpOpen)
+        drawHelpWindow();
+
     if (isGameOver) {
         drawGameOver();
     }
@@ -1809,6 +2155,7 @@ function updateTutorial(time) {
 
         case 5:
             break;
+
         case 6:
             if (time - lastFallTime > currentInterval) {
                 if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
@@ -1839,6 +2186,203 @@ function updateTutorial(time) {
 
                 lastFallTime = time;
             }
+            break;
+        case 7:
+        case 8:
+            break;
+        
+            case 9:
+                if (time - lastFallTime > currentInterval) {
+                    if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
+                        currentSquare.y += cellHeight;
+                    } else {
+                        // Проверяем, если карта достигла нижнего ряда на шаге 9 и шаг 9 инициализирован
+                        if (tutorialStep === 9 && step9Initialized) {
+                            const isInCenterCell = fallingCard.x === gridX + 2 * cellWidth; // Проверка на центральный слот
+                            if (isInCenterCell) {
+                                // Если карта попала в центральную клетку, отмечаем успех
+                                wasAttemptFailed = false;
+                                tutorialTaskCompleted = true;
+                                checkTutorialStepCompletion();
+                            } else {
+                                // Если карта не попала в центральную клетку, перезапускаем шаг
+                                step9Initialized = false;
+                                tutorialTaskCompleted = false;
+                                wasAttemptFailed = true; // Отмечаем, что попытка была неудачной
+                            }
+                        }
+            
+                        if (!checkAndRemoveFullLines()) {
+                            squares.push(createNewSquare());
+                        }
+                    }
+                    lastFallTime = time;
+                }   
+                break;
+        case 10:
+        case 11:
+            break;
+
+        case 12:
+
+            if (time - lastFallTime > currentInterval) {
+                if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
+                    currentSquare.y += cellHeight;
+                } else {
+
+                    // Проверяем, если карта достигла второго ряда на шаге 12 и шаг 12 инициализирован
+                    if (tutorialStep === 12 && step12Initialized) {
+
+                        const isInSecondRow = fallingCard.y === gridY + 6 * cellHeight; // Проверка на второй ряд
+
+                        if (isInSecondRow) {
+                            // Если карта попала на второй ряд, отмечаем успешное выполнение задания
+                            wasAttemptFailed = false;
+                            tutorialTaskCompleted = true;
+                            checkTutorialStepCompletion();
+                        } else {
+                            // Если карта не попала на второй ряд, перезапускаем шаг
+                            step12Initialized = false;
+                            tutorialTaskCompleted = false;
+                            wasAttemptFailed = true; // Отмечаем, что попытка была неудачной
+                        }
+                    }
+
+                }
+
+                lastFallTime = time;
+            }
+            break;
+
+            case 13:
+
+            if (time - lastFallTime > currentInterval) {
+                if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
+                    currentSquare.y += cellHeight;
+                } else {
+
+                    // Проверяем, если карта достигла второго ряда на шаге 12 и шаг 12 инициализирован
+                    if (tutorialStep === 13 && step13Initialized) {
+
+                        const isInSecondRow = fallingCard.y === gridY + 6 * cellHeight; // Проверка на второй ряд
+
+                        if (isInSecondRow) {
+                            // Если карта попала на второй ряд, отмечаем успешное выполнение задания
+                            wasAttemptFailed = false;
+                            tutorialTaskCompleted = true;
+                            checkTutorialStepCompletion();
+                        } else {
+                            // Если карта не попала на второй ряд, перезапускаем шаг
+                            squares.pop(); // Удаляем последнюю карту, которая не достигла целевого ряда
+                            step13Initialized = false;
+                            tutorialTaskCompleted = false;
+                            wasAttemptFailed = true; // Отмечаем, что попытка была неудачной
+                        }
+                    }
+
+                }
+                lastFallTime = time;
+            }
+            break;
+
+            case 14:
+
+            if (time - lastFallTime > currentInterval) {
+                if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
+                    currentSquare.y += cellHeight;
+                } else {
+
+                    // Проверяем, если карта достигла второго ряда на шаге 12 и шаг 12 инициализирован
+                    if (tutorialStep === 14 && step14Initialized) {
+
+                        const isInSecondRow = fallingCard.y === gridY + 6 * cellHeight; // Проверка на второй ряд
+
+                        if (isInSecondRow) {
+                            // Если карта попала на второй ряд, отмечаем успешное выполнение задания
+                            wasAttemptFailed = false;
+                            tutorialTaskCompleted = true;
+                            checkTutorialStepCompletion();
+                        } else {
+                            // Если карта не попала на второй ряд, перезапускаем шаг
+                            squares.pop(); // Удаляем последнюю карту, которая не достигла целевого ряда
+                            step14Initialized = false;
+                            tutorialTaskCompleted = false;
+                            wasAttemptFailed = true; // Отмечаем, что попытка была неудачной
+                        }
+                    }
+
+                }
+                lastFallTime = time;
+            }
+            break;
+
+            case 15:
+
+            if (time - lastFallTime > currentInterval) {
+                if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
+                    currentSquare.y += cellHeight;
+                } else {
+
+                    // Проверяем, если карта достигла второго ряда на шаге 12 и шаг 12 инициализирован
+                    if (tutorialStep === 15 && step15Initialized) {
+
+                        const isInSecondRow = fallingCard.y === gridY + 6 * cellHeight; // Проверка на второй ряд
+
+                        if (isInSecondRow) {
+                            // Если карта попала на второй ряд, отмечаем успешное выполнение задания
+                            wasAttemptFailed = false;
+                            tutorialTaskCompleted = true;
+                            checkTutorialStepCompletion();
+                        } else {
+                            // Если карта не попала на второй ряд, перезапускаем шаг
+                            squares.pop(); // Удаляем последнюю карту, которая не достигла целевого ряда
+                            step15Initialized = false;
+                            tutorialTaskCompleted = false;
+                            wasAttemptFailed = true; // Отмечаем, что попытка была неудачной
+                        }
+                    }
+
+                }
+                lastFallTime = time;
+            }
+            break;
+
+            case 16:
+
+            if (time - lastFallTime > currentInterval) {
+                if (currentSquare.y + cellHeight < gridY + gridHeight && !checkCollision(currentSquare)) {
+                    currentSquare.y += cellHeight;
+                } else {
+
+                    // Проверяем, если карта достигла второго ряда на шаге 12 и шаг 12 инициализирован
+                    if (tutorialStep === 16 && step16Initialized) {
+
+                        const isInSecondRow = fallingCard.y === gridY + 6 * cellHeight; // Проверка на второй ряд
+
+                        if (isInSecondRow) {
+                            // Если карта попала на второй ряд, отмечаем успешное выполнение задания
+                            wasAttemptFailed = false;
+                            tutorialTaskCompleted = true;
+                            checkTutorialStepCompletion();
+                        } else {
+                            // Если карта не попала на второй ряд, перезапускаем шаг
+                            squares.pop(); // Удаляем последнюю карту, которая не достигла целевого ряда
+                            step16Initialized = false;
+                            tutorialTaskCompleted = false;
+                            wasAttemptFailed = true; // Отмечаем, что попытка была неудачной
+                        }
+                    }
+
+                    
+                    if (!checkAndRemoveFullLines()) {
+                        squares.push(createNewSquare());
+                    }
+
+                }
+                lastFallTime = time;
+            }
+
+            break;
 
         default:
             // на этом шаге пока не падает карта
@@ -1944,6 +2488,7 @@ function drawStartButton(buttonText = "Start", x = canvas.width / 2 - 100, y = 4
 
     ctx.restore();
 }
+
 function finishTutorial() {
     isTutorialMode = false;  // Отключаем режим туториала
     document.getElementById('gameWrapper').style.display = 'none';  // Скрываем игровое поле
