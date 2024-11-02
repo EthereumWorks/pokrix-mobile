@@ -91,30 +91,19 @@ body, html {
   display: flex;
   justify-content: center;
   align-items: center;
-  position: absolute; /* Позиционирование кнопки */
-  bottom: 140px; /* Отступ от нижней части экрана */
+  bottom: 40px; /* Отступ от нижней части экрана */
   right: 20px; /* Отступ от правой части экрана */
 }
 
+#startButton:hover {
+}
 
 #howToPlayButton {
   display: flex;
   justify-content: center;
   align-items: center;
   transition: transform 0.3s ease;
-  position: absolute; /* Позиционирование кнопки */
-  bottom: 80px; /* Отступ над кнопкой Start */
-  right: 20px; /* Совпадение по правому краю с кнопкой Start */
-}
-
-
-#lboardButton {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: transform 0.3s ease;
-  position: absolute; /* Позиционирование кнопки */
-  bottom: 20px; /* Отступ над кнопкой Start */
+  bottom: 110px; /* Отступ над кнопкой Start */
   right: 20px; /* Совпадение по правому краю с кнопкой Start */
 }
 
@@ -285,8 +274,8 @@ button {
 }
 
 #backToGameButton {
-  width: 227px;
-  height: 80px;
+  width: 219px;
+  height: 58px;
   background-color: transparent;
   border: none;
   position: absolute; /* Абсолютное позиционирование */
@@ -332,4 +321,36 @@ button {
 @keyframes glow {
   from { box-shadow: 0 0 5px #FF007F; }
   to { box-shadow: 0 0 15px #FF007F; }
+}
+
+#leaderboardButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  bottom: 170px; /* Позиция над кнопкой Start */
+  right: 20px;
+  cursor: pointer;
+}
+
+#buttonsContainer {
+  position: absolute;
+  bottom: 20px; /* Отступ от нижней части экрана */
+  right: 20px; /* Отступ от правой части экрана */
+  display: flex;
+  flex-direction: column;
+  gap: 0px; /* Расстояние между кнопками — половина от высоты кнопки 50px */
+}
+
+.menu-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0; /* Убираем все внешние отступы */
+  cursor: pointer;
+}
+
+.menu-button img {
+  width: 200px;
+  margin: 0; /* Убираем все внешние отступы у изображения */
+  padding: 0;
 }
