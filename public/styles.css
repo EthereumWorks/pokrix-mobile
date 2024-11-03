@@ -360,8 +360,13 @@ button {
 }
 
 #backToMenuButton {
-  z-index: 1000;
-  position: absolute;
+  position: fixed; /* Изменение на фиксированное позиционирование */
+  bottom: 20px; /* Отступ от нижней границы */
+  left: 50%; 
+  transform: translateX(-50%); /* Убираем вертикальный translate */
+  width: 180px;
+  height: 50px;
+  z-index: 9999; /* Убедимся, что кнопка всегда поверх */
   cursor: pointer;
 }
 

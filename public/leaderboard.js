@@ -226,7 +226,10 @@ document.addEventListener('DOMContentLoaded', () => {
             leaderboardCtx.fillText(leaderboardData[i].level, columnPositions[3], y + rowHeight / 2 + 8);
             leaderboardCtx.fillStyle = '#FF007F';
             leaderboardCtx.fillText(leaderboardData[i].lines_removed, columnPositions[4], y + rowHeight / 2 + 8);
+
         }
+
+        
     }
 
 });
