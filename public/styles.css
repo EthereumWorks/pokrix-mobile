@@ -286,7 +286,6 @@ button {
 
 #backToGameButton {
   width: 227px;
-  height: 80px;
   background-color: transparent;
   border: none;
   position: absolute; /* Абсолютное позиционирование */
@@ -300,6 +299,119 @@ button {
   transform: none; /* Убирает любые трансформации */
   box-shadow: none; /* Убирает тень */
   cursor: default; /* Убирает указатель */
+}
+
+
+
+#backFromLeaderboardButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute; /* Абсолютное позиционирование внутри leaderboardScreen */
+  bottom: 20px; /* Отступ от нижней границы окна leaderboardScreen */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+#backFromLeaderboardButton img {
+  width: 200px;
+  height: auto;
+}
+
+#leaderboardCanvas {
+  width: 360px;
+  height: 640px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #333; /* Это добавляет визуальную границу */
+  z-index: 1000; /* Поверх других элементов */
+}
+
+#leaderboardScreen {
+  width: 360px;
+  height: 640px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Размещаем элементы в верхней части */
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.9); /* Полупрозрачный фон */
+  color: #FFF;
+  font-family: 'VT323', monospace;
+  position: relative; /* Для правильного позиционирования дочерних элементов */
+}
+
+#leaderboardHeader {
+  width: 100%;
+  height: 85px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to top right, #2A2A2A, #333333);
+  color: #EFEFEF;
+  font-family: 'VT323', monospace;
+  box-sizing: border-box;
+  position: relative;
+  margin-top: 0; /* Убираем отступ сверху */
+}
+
+#backToMenuButton {
+  z-index: 1000;
+  position: absolute;
+  cursor: pointer;
+}
+
+#backToMenuButton {
+  pointer-events: auto;
+}
+
+.leaderboard-title {
+  font-size: 30px;
+  font-weight: normal; /* Убираем излишнюю жирность */
+  color: #EFEFEF;
+  text-shadow: -1px 1px 2px rgba(26, 26, 26, 0.5);
+  margin: 0;
+  padding: 0;
+}
+
+.leaderboard-icons {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.line {
+  width: 40px;
+  height: 2px;
+  background-color: #EFEFEF;
+  margin: 0 10px;
+}
+
+.crown {
+  font-family: 'Noto Sans Symbols2', sans-serif;
+  font-size: 18px;
+  color: #EFEFEF;
+  text-shadow: -1px 1px 1px rgba(0, 0, 0, 0.5);
+  margin: 0 3px;
+}
+
+.line {
+  width: 40px;
+  height: 2px;
+  background-color: #EFEFEF;
+  margin: 0 10px;
+}
+
+.crown {
+  font-family: 'Noto Sans Symbols2', sans-serif;
+  font-size: 18px;
+  color: #EFEFEF;
+  text-shadow: -1px 1px 1px rgba(0, 0, 0, 0.5);
+  margin: 0 3px;
 }
 
 @keyframes blinkGreen {

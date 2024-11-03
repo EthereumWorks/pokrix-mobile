@@ -155,24 +155,12 @@ function drawLoadingScreen() {
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Рисуем текст "Loading"
-    ctx.fillStyle = '#FFF';
-    ctx.font = '30px Arial';
+    // Рисуем текст "Loading..." с шрифтом VT323
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '24px VT323, monospace'; // Шрифт VT323 и увеличенный размер
     ctx.textAlign = 'center';
-    ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2 - 40);
-
-    // Рисуем прогресс-бар (без процентов)
-    const barWidth = canvas.width * 0.6;
-    const barHeight = 20;
-    const barX = (canvas.width - barWidth) / 2;
-    const barY = canvas.height / 2;
-
-    ctx.fillStyle = '#FFF';
-    ctx.fillRect(barX, barY, barWidth, barHeight); // Полный размер
-
-    // Заполняем прогресс-бар
-    ctx.fillStyle = '#33FF33';
-    ctx.fillRect(barX, barY, barWidth * 1, barHeight); // Можно убрать, если не нужно отображать заполнение
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2);
 }
 
 function updateProgressBar(percentage) {
@@ -205,6 +193,13 @@ function disableAllControlButtons() {
 }
 
 function initializeGame(isTutorial = false) {
+
+    document.getElementById('playAgainButton').style.display = 'none';
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('controls').style.display = 'flex'; // Показываем кнопки управления
+    clearButtonHighlights();
+
+    isHelpOpen = false;
     usedCards = [];
     squares = [];
     playerScore = 0;
@@ -223,9 +218,7 @@ function initializeGame(isTutorial = false) {
         document.getElementById('skipTutorialButton').style.display = 'block'; // Показываем кнопку Skip в туториале
     }
     squares.push(createNewSquare());
-    document.getElementById('playAgainButton').style.display = 'none';
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('controls').style.display = 'flex'; // Показываем кнопки управления
+
 }
 
 function initializeTutoralAfterGameOver() {
@@ -255,6 +248,12 @@ function preloadFonts() {
     return document.fonts.ready;
 }
 
+function setVisibleAllControlButtons() // показываем все кнопки упрвления
+{
+    document.getElementById('leftButton').style.visibility = "visible";
+    document.getElementById('downButton').style.visibility = "visible";
+    document.getElementById('rightButton').style.visibility = "visible";
+}
 
 // Функция для начала игры
 function startGame() {
@@ -262,6 +261,8 @@ function startGame() {
     Promise.all([preloadImages(), preloadFonts()]).then(() => {
         activateBackground();
         initializeGame(false);  // Инициализируем игру без туториала
+        enableAllControlButtons(); // показываем все кнопки упрвления
+        setVisibleAllControlButtons();
         requestAnimationFrame(updateGame); // Запуск игрового цикла
     });
 }
@@ -271,6 +272,8 @@ function startTutorial() {
     Promise.all([preloadImages(), preloadFonts()]).then(() => {
         activateBackground();
         initializeGame(true);  // Инициализируем игру без туториала
+        enableAllControlButtons(); // показываем все кнопки упрвления
+        setVisibleAllControlButtons();
         requestAnimationFrame(updateTutorial); // Запуск игрового цикла
     });
 }
@@ -410,6 +413,7 @@ function drawHelpWindow() {
     });
 
     ctx.restore();
+
 }
 
 function toggleHelpWindow() {
@@ -433,6 +437,7 @@ function toggleHelpWindow() {
     }
 
     if (isHelpOpen) {
+
         drawHelpWindow();
         // Условие для шага 7 в туториале
         if (isTutorialMode && tutorialStep === 7) {
@@ -441,9 +446,10 @@ function toggleHelpWindow() {
         }
     } else {
         
-        tutorialTaskCompleted = false; // Сбрасываем флаг
-        if (isTutorialMode) 
+        if (isTutorialMode) {
+            tutorialTaskCompleted = false; // Сбрасываем флаг
             requestAnimationFrame(updateTutorial);
+        }
         else
             requestAnimationFrame(updateGame); 
     }
@@ -638,13 +644,15 @@ function setNextFallingCard(card) {
         x: gridX + 2 * cellWidth,    // Начальное положение (вторая колонка)
         y: gridY,                    // Начальное положение сверху
         card: {                      // Определяем масть и значение карты
-            suit: { name: card.suit }, // Масть карты
+            suit: { name: card.suit.name, color: card.suit.color }, // Масть и цвет карты
             value: card.value          // Номинал карты
         },
-        image: getCardImage({ suit: { name: card.suit }, value: card.value }) // Загружаем изображение карты
+        image: getCardImage({ suit: { name: card.suit.name }, value: card.value }) // Загружаем изображение карты
     };
-    // добавляем карту в массив используемых
+
+    // Добавляем карту в массив используемых, используя нужную структуру
     usedCards.push(card);
+
     // Добавляем падающую карту в массив `squares`
     squares.push(fallingCard);
 }
@@ -825,7 +833,7 @@ function showTutorialStep() {
                 placeFourCardsAtBottom(["6h", "Ac", "Ah", "8s"],1);
                 
                 // Устанавливаем 6 крестей как следующую падающую карту
-                setNextFallingCard({ suit: 'clubs', value: '6' });
+                setNextFallingCard({ suit: { name: 'clubs', color: 'green' }, value: '6' });
             
                 // Отмечаем, что шаг 4 был инициализирован
                 step6Initialized = true;
@@ -972,8 +980,9 @@ function showTutorialStep() {
                     const row = (square.y - gridY) / cellHeight;
                     return row === 7; // Оставляем только карты в нижнем ряду
                 });
+
                 // Устанавливаем 2 бубен (2d) как следующую падающую карту
-                setNextFallingCard({ suit: 'diamonds', value: '2' });   
+                setNextFallingCard({ suit: { name: 'diamonds', color: 'blue' }, value: '2' });
                 
                 nextCard = { 
                     suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
@@ -993,7 +1002,7 @@ function showTutorialStep() {
 
             if (!step13Initialized) {
                 // Устанавливаем 5d как следующую падающую карту
-                setNextFallingCard({ suit: 'diamonds', value: '5' }); 
+                setNextFallingCard({ suit: { name: 'diamonds', color: 'blue' }, value: '5' });
                 
                 nextCard = { 
                     suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
@@ -1013,7 +1022,7 @@ function showTutorialStep() {
 
             if (!step14Initialized) {
                 // Устанавливаем 5d как следующую падающую карту
-                setNextFallingCard({ suit: 'diamonds', value: '9' });   
+                setNextFallingCard({ suit: { name: 'diamonds', color: 'blue' }, value: '9' });  
                 
                 nextCard = { 
                     suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
@@ -1033,7 +1042,7 @@ function showTutorialStep() {
 
             if (!step15Initialized) {
                 // Устанавливаем 5d как следующую падающую карту
-                setNextFallingCard({ suit: 'diamonds', value: 'K' });  
+                setNextFallingCard({ suit: { name: 'diamonds', color: 'blue' }, value: 'K' });
                 
                 nextCard = { 
                     suit: { name: 'diamonds', color: 'blue' }, // масть — бубны
@@ -1053,7 +1062,7 @@ function showTutorialStep() {
 
             if (!step16Initialized) {
                 // Устанавливаем 5d как следующую падающую карту
-                setNextFallingCard({ suit: 'diamonds', value: 'A' });     
+                setNextFallingCard({ suit: { name: 'diamonds', color: 'blue' }, value: 'A' });
                 
                 nextCard = { 
                     suit: { name: 'hearts', color: 'red' }, // масть — бубны
@@ -1105,8 +1114,8 @@ function showTutorialStep() {
                 // Размещаем 4 карты в нижнем ряду
                 placeFourCardsAtBottom(["6c", "7c", "8c", "9c"],0);
 
-                            // Устанавливаем Kh как следующую падающую карту
-             setNextFallingCard({ suit: 'hearts', value: 'K' });    
+                // Устанавливаем Kh как следующую падающую карту
+                setNextFallingCard({ suit: { name: 'hearts', color: 'red' }, value: 'K' });
 
                 step18Initialized = true;
             }
@@ -1140,7 +1149,7 @@ function showTutorialStep() {
             squares.pop();
 
             // Устанавливаем Kh как следующую падающую карту
-            setNextFallingCard({ suit: 'hearts', value: 'K' });   
+            setNextFallingCard({ suit: { name: 'hearts', color: 'red' }, value: 'K' });
 
             nextCard = { 
                 suit: { name: 'clubs', color: 'green' }, // масть — бубны
@@ -1170,12 +1179,12 @@ function showTutorialStep() {
             if (!step20Initialized) {
 
                 const newUsedCards = [
-                    { suit: { name: 'hearts' }, value: 'K' },
-                    { suit: { name: 'clubs' }, value: '5' },
-                    { suit: { name: 'clubs' }, value: '6' },
-                    { suit: { name: 'clubs' }, value: '7' },
-                    { suit: { name: 'clubs' }, value: '8' },
-                    { suit: { name: 'clubs' }, value: '9' }
+                    { suit: { name: 'hearts', color: 'red' }, value: 'K' },
+                    { suit: { name: 'clubs', color: 'green' }, value: '5' },
+                    { suit: { name: 'clubs', color: 'green' }, value: '6' },
+                    { suit: { name: 'clubs', color: 'green' }, value: '7' },
+                    { suit: { name: 'clubs', color: 'green' }, value: '8' },
+                    { suit: { name: 'clubs', color: 'green' }, value: '9' }
                 ];
                 
                 // очищаем массив использованных карт
@@ -1759,6 +1768,12 @@ if (isMobile) {
 
     });
     document.getElementById('downButton').addEventListener('mouseup', () => {
+        currentInterval = fallInterval;
+        document.getElementById('downButton').classList.remove('pressed');
+    });
+
+    // Сброс интервала при покидании кнопки указателем мыши
+    document.getElementById('downButton').addEventListener('mouseleave', () => {
         currentInterval = fallInterval;
         document.getElementById('downButton').classList.remove('pressed');
     });
@@ -2377,12 +2392,8 @@ function highlightDownButton() {
         return;
     }
 
-    // Подсвечиваем кнопку и продолжаем подсветку с циклом
-    highlightButton('downButton', 1000, () => {
-        if (!tutorialTaskCompleted && tutorialStep === 2) {
-            highlightDownButton(); // Продолжаем подсветку, пока задание не выполнено
-        }
-    });
+    document.getElementById('downButton').classList.add('highlight');
+
 }
 
 function highlightLeftAndRightButtons() {
@@ -2467,6 +2478,8 @@ function restoreGameState() {
 
 // Цикл обновления для туториала
 function updateTutorial(time) {
+
+    if (!isTutorialMode) return;
 
     const currentSquare = squares[squares.length - 1];
 
@@ -2972,6 +2985,8 @@ function drawStartButton(buttonText = "Start", x = canvas.width / 2 - 100, y = 4
 
 function finishTutorial() {
     isTutorialMode = false;  // Отключаем режим туториала
+    isHelpOpen = false;
+    document.getElementById('backToGameButton').style.display = 'none'; // убираем кнопку Back To Game
     document.getElementById('gameWrapper').style.display = 'none';  // Скрываем игровое поле
     document.getElementById('mainMenu').style.display = 'block';  // Возвращаем главное меню
 }
@@ -3009,3 +3024,22 @@ function drawFlashingFrame(x, y, width, height, borderRadius = 5) {
         frameDirection *= -1; // Меняем направление при достижении крайних значений
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const startButton = document.getElementById('startButton');
+    const startTutorialButton = document.getElementById('startTutorialButton');
+
+    if (startButton) {
+        startButton.addEventListener('click', () => {
+            // Функция для запуска игры
+            startGame();
+        });
+    }
+
+    if (startTutorialButton) {
+        startTutorialButton.addEventListener('click', () => {
+            // Функция для запуска туториала
+            startTutorial();
+        });
+    }
+});

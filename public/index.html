@@ -39,7 +39,15 @@
 
     <span style="font-family: 'VT323', monospace; visibility: hidden;">Loading VT323</span>
 </div>
-    
+
+<!-- Кнопка "Back to Menu" добавляется в HTML и скрывается по умолчанию -->
+<div id="leaderboardContainer" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 360px; height: 640px;">
+    <canvas id="leaderboardCanvas" width="360" height="640"></canvas>
+    <button id="backToMenuButton" onclick="hideLeaderboard()" class="menu-button" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 180px; height: 50px;">
+        <img src="assets/images/ButtonBackFromLB.png" alt="Back to Menu">
+    </button>
+</div>
+
 <!-- Игровая оболочка -->
 <div id="gameWrapper" style="display: none;">
     <button id="skipTutorialButton">Skip Tutorial &gt;</button>
@@ -58,5 +66,6 @@
 </div>
     
     <script src="gameLogic.js"></script>
+    <script src="leaderboard.js"></script> <!-- Скрипт для лидерборда -->
 </body>
 </html>
