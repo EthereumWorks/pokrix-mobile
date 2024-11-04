@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Attempting to fetch leaderboard data...");
     
             // Попытка выполнить запрос на указанный URL с заголовком для пропуска предупреждения
-            const response = await fetch('https://d8f1-77-238-247-5.ngrok-free.app/api/leaderboard', {
+            const response = await fetch('https://5f61-77-238-242-192.ngrok-free.app/api/leaderboard', {
                 mode: 'cors',
                 headers: {
                     'ngrok-skip-browser-warning': 'true' // добавляем заголовок для пропуска предупреждения
